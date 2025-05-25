@@ -1,12 +1,13 @@
 {
   "name": "eduapi",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/server.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+     "prepare": "husky install"
   },
   "keywords": [],
-  "author": "",
+  "author": "Asmare",
   "license": "ISC",
   "description": "",
   "dependencies": {
@@ -23,12 +24,15 @@
     "zod": "^3.25.28"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.21",
+    "husky": "^9.1.7",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   }
