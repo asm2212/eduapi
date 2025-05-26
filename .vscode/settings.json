@@ -1,0 +1,10 @@
+{
+  // Format file on save
+  "editor.formatOnSave": true,
+  // Use Prettier as the default formatter (install it if not already)
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // Remove extra blank lines
+  "editor.trimAutoWhitespace": true,
+  // Remove trailing spaces
+  "files.trimTrailingWhitespace": true"
+}

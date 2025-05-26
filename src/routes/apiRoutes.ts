@@ -1,9 +1,10 @@
-import { Router } from 'express'
-import apiController from '../controllers/apiController'
+import { Router } from 'express';
+import { self, health } from '../controllers/apiController';
 
-const router = Router()
+const router = Router();
 
-router.route('/self').get(apiController.self)
-router.route('/health').get(apiController.health)
+router.get('/self', self);
+router.get('/health', health);
 
-export default router
+export default router;
+

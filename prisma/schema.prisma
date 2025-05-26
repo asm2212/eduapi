@@ -7,28 +7,71 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String   @db.VarChar(255)
-  content   String?
-  published Boolean  @default(false)
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+  INDIVIDUAL
 }
 
-model Profile {
-  id     Int     @id @default(autoincrement())
-  bio    String?
-  user   User    @relation(fields: [userId], references: [id])
-  userId Int     @unique
+enum AccountType {
+  INDIVIDUAL
+  ADMIN
+  COMPANY
+  EMPLOYEE
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  BLOCKED
 }
 
 model User {
-  id      Int      @id @default(autoincrement())
+  id      String      @id @default(uuid())
+  firstname String
+  lastname String?
   email   String   @unique
-  name    String?
-  posts   Post[]
-  profile Profile?
+  phone String?
+  username String? @unique
+  empID String?
+  accountType AccountType @default(INDIVIDUAL)
+  status Status @default(ACTIVE)
+
+  // address information
+  addressLine1 String?
+  addressLine2 String?
+  city String?
+  state String?
+  postalCode String?
+  country String?
+
+  //company instituate inforamtion
+  companyName String?
+  instituteName String?
+
+  gstin String?
+  website String?
+
+  role Role @default(INDIVIDUAL)
+  password String
+  isVerified Boolean @default(false)
+  verificationToken String?
+  forgotPasswordToken String?
+  lastLogin DateTime?
+  userAgent String[]
+  profilePicture String?
+  bio String?
+  dateOfBirth DateTime?
+
+  socialLinks Json?
+
+  //contact information
+  contactInfo Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
 }
