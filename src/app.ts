@@ -6,6 +6,9 @@ import helmet from 'helmet';
 import router from './routes/apiRoutes';
 import cors from 'cors';
 import authRouter from './routes/authRoutes';
+import adminRouter from './routes/adminRoutes';
+import companyRouter from './routes/companyRoutes';
+import employeeRouter from './routes/employeeRoutes';
 
 const app: Application = express();
 
@@ -24,6 +27,9 @@ app.use(express.json());
 // Routes
 app.use('/api/v1', router);
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/company', companyRouter);
+app.use('/api/v1/employee', employeeRouter);
 
 // 404 Handler
 app.use((req: Request, _: Response, next: NextFunction) => {
