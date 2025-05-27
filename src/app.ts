@@ -9,6 +9,7 @@ import authRouter from './routes/authRoutes';
 import adminRouter from './routes/adminRoutes';
 import companyRouter from './routes/companyRoutes';
 import employeeRouter from './routes/employeeRoutes';
+import rateLimit from 'express-rate-limit';
 
 const app: Application = express();
 
@@ -23,6 +24,24 @@ app.use(
 );
 
 app.use(express.json());
+
+
+
+// Rate Limiting Configuration
+const rateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+  legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
+  message: {
+    code: 'TOO_MANY_REQUESTS',
+    message: 'Too many requests from this IP, please try again later.'
+  }
+});
+
+// Apply rate limiting globally
+app.use(rateLimiter);
+
 
 // Routes
 app.use('/api/v1', router);
