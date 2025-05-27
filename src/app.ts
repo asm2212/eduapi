@@ -10,38 +10,41 @@ import adminRouter from './routes/adminRoutes';
 import companyRouter from './routes/companyRoutes';
 import employeeRouter from './routes/employeeRoutes';
 import rateLimit from 'express-rate-limit';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
 
 const app: Application = express();
 
 // Middleware
+//compress response for all routes
+app.use(compression());
+app.use(cookieParser());
 app.use(helmet());
 app.use(
     cors({
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-        origin: ['https://client.com'],
+        origin: ['*'],
         credentials: true
     })
 );
 
-app.use(express.json());
-
-
+app.use(express.json({ limit: '16kb' })); // Limit JSON body size to 16kb
+app.use(express.urlencoded({ extended: true, limit: '16kb' })); // Limit URL-encoded body size to 16kb
 
 // Rate Limiting Configuration
 const rateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
-  legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
-  message: {
-    code: 'TOO_MANY_REQUESTS',
-    message: 'Too many requests from this IP, please try again later.'
-  }
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    message: {
+        code: 'TOO_MANY_REQUESTS',
+        message: 'Too many requests from this IP, please try again later.'
+    }
 });
 
 // Apply rate limiting globally
 app.use(rateLimiter);
-
 
 // Routes
 app.use('/api/v1', router);
