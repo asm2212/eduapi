@@ -12,10 +12,11 @@ export enum ZodErrorMessages {
 // Reusable Zod string schemas with common validations
 export const zodSchemas = {
     nameSchema: z.string().min(3, ZodErrorMessages.NAME_MIN),
-    emailSchema: z.string().email(ZodErrorMessages.EMAIL_INVALID).trim(),
+    emailSchema: z.string().email(ZodErrorMessages.EMAIL_INVALID).trim().toLowerCase(),
     phoneSchema: z.string().min(10, ZodErrorMessages.PHONE_MIN).max(15, ZodErrorMessages.PHONE_MAX).trim(),
     passwordSchema: z
         .string()
         .min(6, ZodErrorMessages.PASSWORD_MIN)
         .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, ZodErrorMessages.PASSWORD_COMPLEXITY)
 };
+

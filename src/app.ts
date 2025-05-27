@@ -10,27 +10,29 @@ import adminRouter from './routes/adminRoutes';
 import companyRouter from './routes/companyRoutes';
 import employeeRouter from './routes/employeeRoutes';
 import rateLimit from 'express-rate-limit';
-import compression from 'compression';
+// import compression from 'compression';
 import cookieParser from 'cookie-parser';
 
 const app: Application = express();
 
 // Middleware
 //compress response for all routes
-app.use(compression());
+// app.use(compression());
 app.use(cookieParser());
 app.use(helmet());
-app.use(
-    cors({
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-        origin: ['*'],
-        credentials: true
-    })
-);
+// app.use(
+//     cors({
+//         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+//         origin: ['*'],
+//         credentials: true
+//     })
+// );
 
-app.use(express.json({ limit: '16kb' })); // Limit JSON body size to 16kb
-app.use(express.urlencoded({ extended: true, limit: '16kb' })); // Limit URL-encoded body size to 16kb
-
+// app.use(express.json({ limit: '16kb' })); // Limit JSON body size to 16kb
+// app.use(express.urlencoded({ extended: true, limit: '16kb' })); // Limit URL-encoded body size to 16kb
+app.use(cors());
+app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true, limit: '25kb' })); // Parse URL-encoded bodies
 // Rate Limiting Configuration
 const rateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes

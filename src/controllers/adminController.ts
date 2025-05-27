@@ -1,13 +1,58 @@
+import { PrismaClient } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
+import { adminSignupSchema } from '../validator/adminValidator';
+import httpResponse from '../utils/httpResponse';
+import z from 'zod';
+import httpError from '../utils/httpError';
+import { hashPassword } from '../utils/hashPassword';
+const prisma = new PrismaClient();
 
 // amdin authentication controllers
-export const adminSignup = (_: Request, res: Response, next: NextFunction): void => {
+export const adminSignup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        res.status(501).json({ message: 'Admin signup not implemented yet' });
+        // validate and parse the request body
+        const { fullName, email, phone, password } = await adminSignupSchema.parseAsync(req.body);
+
+        // check if the admin already exists (this is a placeholder, implement your own logic)
+        const existingAdmin = await prisma.admin.findUnique({
+            where: { email }
+        });
+        if (existingAdmin) {
+            return httpResponse(req, res, 400, 'Email already in use');
+        }
+        // hash the password
+        const hashedPassword = await hashPassword(password);
+        // create the new admin (this is a placeholder, implement your own logic)
+        const newAdmin = await prisma.admin.create({
+            data: {
+                fullName,
+                email,
+                phone,
+                password: hashedPassword
+            }
+        });
+
+        // structure the response data
+        const adminData = {
+            id: newAdmin.id,
+            fullName: newAdmin.fullName,
+            email: newAdmin.email,
+            phone: newAdmin.phone,
+            createdAt: newAdmin.createdAt,
+            updatedAt: newAdmin.updatedAt
+        }
+
+        // use httpresponse for consistents success response
+       return httpResponse(req, res, 201, 'Admin created successfully', adminData);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        // handle validation errors
+        if (error instanceof z.ZodError) {
+            return httpResponse(req,res,400, 'Validation error', {errors: error.errors});
     }
+    // handle other errors using httpError
+     return httpError(next,error,req,500)
 };
+
 
 export const adminLogin = (_: Request, res: Response, next: NextFunction): void => {
     try {
@@ -265,5 +310,4 @@ export const deactivateIndividual = (_: Request, res: Response, next: NextFuncti
     } catch (error) {
         next(error); // Important: Pass errors to the error handling middleware
     }
-};
-
+}
