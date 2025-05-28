@@ -1,10 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
-import { adminSignupSchema } from '../validator/adminValidator';
+import { adminLoginSchema, adminSignupSchema } from '../validator/adminValidator';
 import httpResponse from '../utils/httpResponse';
 import z from 'zod';
 import httpError from '../utils/httpError';
 import { hashPassword } from '../utils/hashPassword';
+import apiMessages from '../constants/apiMessages';
+import comparePassword from '../utils/comparePassword';
 const prisma = new PrismaClient();
 
 // amdin authentication controllers
@@ -18,7 +20,7 @@ export const adminSignup = async (req: Request, res: Response, next: NextFunctio
             where: { email }
         });
         if (existingAdmin) {
-            return httpResponse(req, res, 400, 'Email already in use');
+            return httpResponse(req, res, 400, apiMessages.auth.emailAlreadyInUse);
         }
         // hash the password
         const hashedPassword = await hashPassword(password);
@@ -40,25 +42,62 @@ export const adminSignup = async (req: Request, res: Response, next: NextFunctio
             phone: newAdmin.phone,
             createdAt: newAdmin.createdAt,
             updatedAt: newAdmin.updatedAt
-        }
+        };
 
         // use httpresponse for consistents success response
-       return httpResponse(req, res, 201, 'Admin created successfully', adminData);
+        return httpResponse(req, res, 201, apiMessages.admin.adminCreated, adminData);
     } catch (error) {
         // handle validation errors
         if (error instanceof z.ZodError) {
-            return httpResponse(req,res,400, 'Validation error', {errors: error.errors});
+            return httpResponse(req, res, 400, 'Validation error', { errors: error.errors });
+        }
+        // handle other errors using httpError
+        return httpError(next, error, req, 500);
     }
-    // handle other errors using httpError
-     return httpError(next,error,req,500)
 };
 
-
-export const adminLogin = (_: Request, res: Response, next: NextFunction): void => {
+export const adminLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        res.status(501).json({ message: 'Admin login not implemented yet' });
+        const { email, password } = await adminLoginSchema.parseAsync(req.body);
+
+        // check if admin exits
+        const admin = await prisma.admin.findUnique({
+            where: {
+                email
+            }
+        });
+
+        if (!admin) {
+            return httpResponse(req, res, 404, apiMessages.admin.adminNotFound);
+        }
+
+        // check password
+        const isPasswordCorrect = await comparePassword(password, admin.password);
+
+        if (!isPasswordCorrect) {
+            return httpResponse(req, res, 401, apiMessages.auth.wrongCredentials);
+        }
+
+        const adminData = {
+            id: admin.id,
+            fullName: admin.fullName,
+            email: admin.email,
+            phone: admin.phone,
+            address: admin.address,
+            accountType: admin.accountType,
+            role: admin.role,
+            status: admin.status,
+            isVerified: admin.isVerified,
+            userAgent: admin.userAgent,
+            createdAt: admin.createdAt
+        };
+
+        return httpResponse(req, res, 200, apiMessages.success.loggedIn, adminData);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        if (error instanceof z.ZodError) {
+            return httpResponse(req, res, 400, apiMessages.error.validationError, { errors: error.errors });
+        }
+        return httpError(next, error, req, 500);
     }
 };
 
@@ -310,4 +349,5 @@ export const deactivateIndividual = (_: Request, res: Response, next: NextFuncti
     } catch (error) {
         next(error); // Important: Pass errors to the error handling middleware
     }
-}
+};
+
