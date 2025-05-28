@@ -6,6 +6,7 @@ export enum ZodErrorMessages {
     PHONE_MIN = 'Phone number must be at least 10 digits',
     PHONE_MAX = 'Phone number cannot exceed 15 digits',
     PASSWORD_MIN = 'Password must be at least 6 characters',
+    PASSWORD_REQUIRED = 'Password is required',
     PASSWORD_COMPLEXITY = 'Password must contain at least one uppercase, one lowercase, one number, and one special character'
 }
 
@@ -18,5 +19,6 @@ export const zodSchemas = {
         .string()
         .min(6, ZodErrorMessages.PASSWORD_MIN)
         .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, ZodErrorMessages.PASSWORD_COMPLEXITY)
+        .nonempty(ZodErrorMessages.PASSWORD_REQUIRED)
 };
 
