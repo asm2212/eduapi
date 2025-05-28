@@ -33,6 +33,8 @@ const apiMessages = {
         emailAlreadyInUse: 'Email already in use',
         invalidToken: 'Invalid token',
         tokenExpired: 'Token expired',
+        noTokenProvided: 'No token provided',
+        invalidTokenFormat: 'Invalid token format',
         accountNotVerified: 'Account not verified',
         accountLocked: 'Account is locked',
         unauthenticated: 'Unauthenticated'
