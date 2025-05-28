@@ -7,6 +7,8 @@ import httpError from '../utils/httpError';
 import { hashPassword } from '../utils/hashPassword';
 import apiMessages from '../constants/apiMessages';
 import comparePassword from '../utils/comparePassword';
+import { generateTokens } from '../utils/tokens/tokens';
+import { UserPayload } from '../types/tokensType';
 const prisma = new PrismaClient();
 
 // amdin authentication controllers
@@ -78,21 +80,36 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
             return httpResponse(req, res, 401, apiMessages.auth.wrongCredentials);
         }
 
-        const adminData = {
+        const payload: UserPayload = {
             id: admin.id,
-            fullName: admin.fullName,
-            email: admin.email,
-            phone: admin.phone,
-            address: admin.address,
             accountType: admin.accountType,
-            role: admin.role,
-            status: admin.status,
-            isVerified: admin.isVerified,
-            userAgent: admin.userAgent,
-            createdAt: admin.createdAt
+            role: admin.role
         };
-
-        return httpResponse(req, res, 200, apiMessages.success.loggedIn, adminData);
+        // return httpResponse(req, res, 200, apiMessages.success.loggedIn, adminData);
+        const { refreshToken, accessToken } = generateTokens(payload);
+        // set refersh token as HTTP-only cokkie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            sameSite: 'strict',
+            path: '/',
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        });
+        return httpResponse(req, res, 200, apiMessages.success.loggedIn, {
+            admin: {
+                id: admin.id,
+                fullName: admin.fullName,
+                email: admin.email,
+                phone: admin.phone,
+                address: admin.address,
+                accountType: admin.accountType,
+                role: admin.role,
+                status: admin.status,
+                isVerified: admin.isVerified,
+                userAgent: admin.userAgent,
+                createdAt: admin.createdAt,
+                token: accessToken
+            }
+        });
     } catch (error) {
         if (error instanceof z.ZodError) {
             return httpResponse(req, res, 400, apiMessages.error.validationError, { errors: error.errors });
