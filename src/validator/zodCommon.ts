@@ -19,6 +19,14 @@ export const zodSchemas = {
         .string()
         .min(6, ZodErrorMessages.PASSWORD_MIN)
         .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, ZodErrorMessages.PASSWORD_COMPLEXITY)
-        .nonempty(ZodErrorMessages.PASSWORD_REQUIRED)
+        .nonempty(ZodErrorMessages.PASSWORD_REQUIRED),
+
+    addressSchema: z.object({
+        street: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        postalCode: z.string().optional(),
+        country: z.string().optional()
+    })
 };
 

@@ -10,7 +10,8 @@ const apiMessages = {
         registered: 'Registered successfully',
         verified: 'Verified successfully',
         passwordResetRequestSent: 'Password reset request sent successfully',
-        passwordResetSuccessful: 'Password reset successful'
+        passwordResetSuccessful: 'Password reset successful',
+        passwordChanged: 'Password Changed'
     },
 
     // General Error Messages
