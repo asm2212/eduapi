@@ -141,7 +141,7 @@ model CompanyContact {
 model Employee {
   id                  String       @id @default(uuid())
   fullName             String
-  empId               String?      @unique // Employee ID (e.g., internal company ID)
+  empId               String?
   email            String       @unique
   department          Departments?
   dateOfBirth         DateTime? // Employee's date of birth

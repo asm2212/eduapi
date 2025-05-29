@@ -24,3 +24,7 @@ export const adminChangePasswordSchema = z.object({
     newPassword: zodSchemas.passwordSchema
 });
 
+export const adminChangeCompanyPlan = z.object({
+    plan: z.enum(['TRIAL', 'BASIC', 'STANDARD', 'PREMIUM'])
+});
+

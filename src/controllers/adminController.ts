@@ -10,6 +10,7 @@ import comparePassword from '../utils/comparePassword';
 import { generateTokens } from '../utils/tokens/tokens';
 import { UserPayload } from '../types/tokensType';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { companyUpdateSchema } from '../validator/companyValidator';
 const prisma = new PrismaClient();
 
 // amdin authentication controllers
@@ -291,15 +292,17 @@ export const getCompanies = async (req: Request, res: Response, next: NextFuncti
 // get a single company by ID
 export const getCompanyById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = await req.body;
-        if (id) {
+        const { companyId } = req.params;
+
+        if (companyId) {
             httpResponse(req, res, 400, apiMessages.error.invalidInput);
         }
 
         const company = await prisma.company.findUnique({
-            where: { id },
+            where: { id: companyId },
 
             select: {
+                id: true,
                 fullName: true,
                 email: true,
                 phone: true,
@@ -323,11 +326,25 @@ export const getCompanyById = async (req: Request, res: Response, next: NextFunc
     }
 };
 // update a company
-export const updateCompany = (_: Request, res: Response, next: NextFunction) => {
+export const updateCompany = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Update company not implemented yet' });
+        const { companyId } = req.params;
+        if (!companyId) {
+            httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        const companyData = await companyUpdateSchema.parseAsync(req.body);
+
+        const updatedCompany = await prisma.company.update({
+            where: { id: companyId },
+            data: companyData
+        });
+
+        return httpResponse(req, res, 200, apiMessages.success.updated, updatedCompany);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        if (error instanceof z.ZodError) {
+            return httpResponse(req, res, 400, apiMessages.error.validationError, { errors: error.errors }); // Zod validation errors
+        }
+        return httpError(next, error, req, 500);
     }
 };
 
@@ -341,34 +358,65 @@ export const deleteCompany = (_: Request, res: Response, next: NextFunction) => 
 };
 
 // block a company
-export const blockCompany = (_: Request, res: Response, next: NextFunction) => {
+export const blockCompany = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Block company not implemented yet' });
+        const { companyId } = req.params;
+        if (!companyId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        await prisma.company.update({
+            where: { id: companyId },
+            data: { status: 'BLOCKED' }
+        });
+        return httpResponse(req, res, 200, apiMessages.auth.blocked);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 
 // activate a company
-export const activateCompany = (_: Request, res: Response, next: NextFunction) => {
+export const activateCompany = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Activate company not implemented yet' });
+        const { companyId } = req.params;
+        if (!companyId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        await prisma.company.update({
+            where: { id: companyId },
+            data: { status: 'ACTIVE' }
+        });
+        return httpResponse(req, res, 200, apiMessages.auth.active);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 
 // deactivate a company
-export const deactivateCompany = (_: Request, res: Response, next: NextFunction) => {
+export const deactivateCompany = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Deactivate company not implemented yet' });
+        const { companyId } = req.params;
+        if (!companyId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        await prisma.company.update({
+            where: { id: companyId },
+            data: { status: 'INACTIVE' }
+        });
+        return httpResponse(req, res, 200, apiMessages.auth.deactivate);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
+    }
+};
+
+export const changeCompanyPlan = async (_: Request, __: Response, next: NextFunction) => {
+    try {
+    } catch (error) {
+        next(error);
     }
 };
 
 // get employees of a specific company
-export const getCompanyEmployees = (_: Request, res: Response, next: NextFunction) => {
+export const getCompanyEmployees = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Get company employees not implemented yet' });
     } catch (error) {
@@ -377,7 +425,7 @@ export const getCompanyEmployees = (_: Request, res: Response, next: NextFunctio
 };
 
 // get a specific employee of a specific company
-export const getCompanyEmployeeById = (_: Request, res: Response, next: NextFunction) => {
+export const getCompanyEmployeeById = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Get company employee by ID not implemented yet' });
     } catch (error) {
@@ -388,7 +436,7 @@ export const getCompanyEmployeeById = (_: Request, res: Response, next: NextFunc
 // Employee management
 
 // create a new employee
-export const createEmployee = (_: Request, res: Response, next: NextFunction) => {
+export const createEmployee = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Create employee not implemented yet' });
     } catch (error) {
@@ -396,7 +444,7 @@ export const createEmployee = (_: Request, res: Response, next: NextFunction) =>
     }
 };
 // get all employees
-export const getEmployees = (_: Request, res: Response, next: NextFunction) => {
+export const getEmployees = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Get employees not implemented yet' });
     } catch (error) {
@@ -404,7 +452,7 @@ export const getEmployees = (_: Request, res: Response, next: NextFunction) => {
     }
 };
 // get a single employee by ID
-export const getEmployeeById = (_: Request, res: Response, next: NextFunction) => {
+export const getEmployeeById = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Get employee by ID not implemented yet' });
     } catch (error) {
@@ -412,7 +460,7 @@ export const getEmployeeById = (_: Request, res: Response, next: NextFunction) =
     }
 };
 // update an employee
-export const updateEmployee = (_: Request, res: Response, next: NextFunction) => {
+export const updateEmployee = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Update employee not implemented yet' });
     } catch (error) {
@@ -420,7 +468,7 @@ export const updateEmployee = (_: Request, res: Response, next: NextFunction) =>
     }
 };
 // delete an employee
-export const deleteEmployee = (_: Request, res: Response, next: NextFunction) => {
+export const deleteEmployee = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Delete employee not implemented yet' });
     } catch (error) {
@@ -428,7 +476,7 @@ export const deleteEmployee = (_: Request, res: Response, next: NextFunction) =>
     }
 };
 // block an employee
-export const blockEmployee = (_: Request, res: Response, next: NextFunction) => {
+export const blockEmployee = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Block employee not implemented yet' });
     } catch (error) {
@@ -436,7 +484,7 @@ export const blockEmployee = (_: Request, res: Response, next: NextFunction) => 
     }
 };
 // activate an employee
-export const activateEmployee = (_: Request, res: Response, next: NextFunction) => {
+export const activateEmployee = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Activate employee not implemented yet' });
     } catch (error) {
@@ -444,7 +492,7 @@ export const activateEmployee = (_: Request, res: Response, next: NextFunction) 
     }
 };
 // deactivate an employee
-export const deactivateEmployee = (_: Request, res: Response, next: NextFunction) => {
+export const deactivateEmployee = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Deactivate employee not implemented yet' });
     } catch (error) {
@@ -455,7 +503,7 @@ export const deactivateEmployee = (_: Request, res: Response, next: NextFunction
 // Individual management
 
 // get all individuals
-export const getIndividuals = (_: Request, res: Response, next: NextFunction) => {
+export const getIndividuals = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Get individuals not implemented yet' });
     } catch (error) {
@@ -463,7 +511,7 @@ export const getIndividuals = (_: Request, res: Response, next: NextFunction) =>
     }
 };
 // get a single individual by ID
-export const getIndividualById = (_: Request, res: Response, next: NextFunction) => {
+export const getIndividualById = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Get individual by ID not implemented yet' });
     } catch (error) {
@@ -480,7 +528,7 @@ export const updateIndividual = (_: Request, res: Response, next: NextFunction) 
     }
 };
 // delete an individual
-export const deleteIndividual = (_: Request, res: Response, next: NextFunction) => {
+export const deleteIndividual = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Delete individual not implemented yet' });
     } catch (error) {
@@ -488,7 +536,7 @@ export const deleteIndividual = (_: Request, res: Response, next: NextFunction) 
     }
 };
 // block an individual
-export const blockIndividual = (_: Request, res: Response, next: NextFunction) => {
+export const blockIndividual = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Block individual not implemented yet' });
     } catch (error) {
@@ -496,7 +544,7 @@ export const blockIndividual = (_: Request, res: Response, next: NextFunction) =
     }
 };
 // activate an individual
-export const activateIndividual = (_: Request, res: Response, next: NextFunction) => {
+export const activateIndividual = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Activate individual not implemented yet' });
     } catch (error) {
@@ -504,7 +552,7 @@ export const activateIndividual = (_: Request, res: Response, next: NextFunction
     }
 };
 // deactivate an individual
-export const deactivateIndividual = (_: Request, res: Response, next: NextFunction) => {
+export const deactivateIndividual = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Deactivate individual not implemented yet' });
     } catch (error) {
