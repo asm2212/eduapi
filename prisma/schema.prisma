@@ -56,6 +56,13 @@ enum Departments {
   Compliance
 }
 
+enum PlanType {
+  TRIAL // upto 2 employees
+  BASIC // upto 50 employees
+  STANDARD // upto 100 employees
+  PREMIUM // upto 250 employees
+}
+
 model Admin {
   id                  String      @id @default(uuid())
   fullName            String
@@ -77,22 +84,25 @@ model Admin {
 
 
 model Company {
-  id                  String      @id @default(uuid())
-  fullName            String
-  email               String      @unique
-  companyId           String
-  phone               String?
-  username            String?
-  industry            String?
-  address             Json?
-  socialLinks         Json?
+
+  id String @id @default(uuid())
+  // company information
+  fullName    String
+  email       String  @unique
+  companyId   String
+  phone       String?
+  username    String?
+  industry    String?
+  address     Json?
+  socialLinks Json?
+  companyLogo String? // URL or path to the company logo
+  description String? // A brief description of the company
+  website     String?
+  // account information
   password            String
   accountType         AccountType @default(COMPANY)
   role                Role        @default(COMPANY)
   status              Status      @default(ACTIVE)
-  companyLogo         String? // URL or path to the company logo
-  description         String? // A brief description of the company
-  website             String?
   isVerified          Boolean     @default(false)
   verificationToken   String?
   forgetPasswordToken String?
@@ -100,6 +110,10 @@ model Company {
   userAgent           String[]
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
+
+   // plan information
+  plan         PlanType @default(TRIAL)
+  maxEmployees String?
 
   // Relationships
   employees       Employee[]      @relation("CompanyEmployees")
