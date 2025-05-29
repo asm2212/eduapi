@@ -78,14 +78,13 @@ model Admin {
 
 model Company {
   id                  String      @id @default(uuid())
-  companyName         String
-  companyEmail        String      @unique
-  companyContact      String?
+  fullName            String
+  email               String      @unique
+  companyId           String
+  phone               String?
+  username            String?
   industry            String?
   address             Json?
-  country             String? // Country of residence
-  city                String? // City of residence
-  postalCode          String? // Postal or zip code
   socialLinks         Json?
   password            String
   accountType         AccountType @default(COMPANY)
@@ -110,7 +109,7 @@ model Company {
 
 model CompanyContact {
   id             String       @id @default(uuid())
-  name           String
+  fullname           String
   email          String       @unique
   phone          String?
   department     Departments?
@@ -127,19 +126,17 @@ model CompanyContact {
 
 model Employee {
   id                  String       @id @default(uuid())
-  empName             String
+  fullName             String
   empId               String?      @unique // Employee ID (e.g., internal company ID)
-  empEmail            String       @unique
+  email            String       @unique
   department          Departments?
   dateOfBirth         DateTime? // Employee's date of birth
   address             Json? // Employee's address information (can be a JSON object)
-  country             String? // Country of residence
-  city                String? // City of residence
-  postalCode          String? // Postal or zip code
+  gender              String?
   jobTitle            String? // Employee's job title or position
   profilePicture      String? // URL or path to the employee's profile picture
-  bio                 String? // A short biography or description of the employee
-  empPhone            String?
+  description          String?
+  phone                String?
   socialLinks         Json?
   password            String
   accountType         AccountType  @default(EMPLOYEE)
@@ -167,12 +164,13 @@ model Individual {
   department          Departments?
   dateOfBirth         DateTime?
   address             Json?
+   jobTitle            String?
+  company             String?
+  institute           String?
+  course              String?
   profilePicture      String? // URL or path to the profile picture
-  bio                 String? // A short biography or description
+  description                 String? // A short biography or description
   gender              String? // Male, Female, Other, etc.
-  country             String? // Country of residence
-  city                String? // City of residence
-  postalCode          String? // Postal or zip code
   password            String
   accountType         AccountType  @default(INDIVIDUAL)
   role                Role         @default(INDIVIDUAL)

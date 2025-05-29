@@ -1,14 +1,5 @@
 import { z } from 'zod';
-
-export enum ZodErrorMessages {
-    NAME_MIN = 'Full Name must be at least 3 characters',
-    EMAIL_INVALID = 'Invalid email format',
-    PHONE_MIN = 'Phone number must be at least 10 digits',
-    PHONE_MAX = 'Phone number cannot exceed 15 digits',
-    PASSWORD_MIN = 'Password must be at least 6 characters',
-    PASSWORD_REQUIRED = 'Password is required',
-    PASSWORD_COMPLEXITY = 'Password must contain at least one uppercase, one lowercase, one number, and one special character'
-}
+import { ZodErrorMessages } from './zodErrorMessage';
 
 // Reusable Zod string schemas with common validations
 export const zodSchemas = {
@@ -27,6 +18,21 @@ export const zodSchemas = {
         state: z.string().optional(),
         postalCode: z.string().optional(),
         country: z.string().optional()
-    })
+    }),
+
+    username: z.string().min(3, ZodErrorMessages.USERNAME_MIN).max(15, ZodErrorMessages.USERNAME_MAX),
+    industry: z.string(),
+    description: z.string().max(100, ZodErrorMessages.DESCRIPTION_MAX),
+    website: z.string().url(ZodErrorMessages.WEBSITE_INVALID),
+
+    socialLinks: z.object({
+        linkedin: z.string().url(ZodErrorMessages.WEBSITE_INVALID).optional(),
+        twitter: z.string().url(ZodErrorMessages.WEBSITE_INVALID).optional(),
+        facebook: z.string().url(ZodErrorMessages.WEBSITE_INVALID).optional(),
+        instagram: z.string().url(ZodErrorMessages.WEBSITE_INVALID).optional(),
+        github: z.string().url(ZodErrorMessages.WEBSITE_INVALID).optional(),
+        gitlab: z.string().url(ZodErrorMessages.WEBSITE_INVALID).optional()
+    }),
+    companyId: z.string()
 };
 

@@ -17,6 +17,7 @@ import {
     updateEmployee,
     verifyInvitation
 } from '../controllers/companyController';
+import { protect, protectCompany } from '../middlewares/authMiddleware';
 
 const companyRouter = Router();
 
@@ -29,14 +30,15 @@ companyRouter.post('/login', companyLogin);
 companyRouter.post('/logout', companyLogout); // Protect logout
 
 // companyRouter.use(isCompanyAdmin);
+companyRouter.use(protect, protectCompany);
 
 // Company Admin Self Routes
 
-companyRouter.get('/profile', getCompanyProfile);
+companyRouter.get('/me', getCompanyProfile);
 
-companyRouter.patch('/profile', updateCompanyProfile);
+companyRouter.patch('/me', updateCompanyProfile);
 
-companyRouter.patch('/profile/change-password', changePassword);
+companyRouter.patch('/me/change-password', changePassword);
 
 // Company Employee Management
 
@@ -71,3 +73,4 @@ companyRouter.post('/invitations', sendInvitation); // Send an invitation to a n
 companyRouter.get('/invitations/:invitationToken', verifyInvitation); // Verify invitation and redirect to signup
 
 export default companyRouter;
+
