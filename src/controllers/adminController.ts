@@ -261,19 +261,65 @@ export const createCompany = (_: Request, res: Response, next: NextFunction) => 
 };
 
 // get all companies
-export const getCompanies = (_: Request, res: Response, next: NextFunction) => {
+export const getCompanies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        res.status(501).json({ message: 'Get companies not implemented yet' });
+        const companies = await prisma.company.findMany({
+            select: {
+                fullName: true,
+                email: true,
+                phone: true,
+                username: true,
+                companyId: true,
+                plan: true,
+                maxEmployees: true,
+                accountType: true,
+                role: true,
+                status: true,
+                isVerified: true
+            }
+        });
+        // Check if companies exist before sending a response
+
+        if (!companies.length) {
+            return httpResponse(req, res, 200, apiMessages.admin.noCompaniesFound, { data: [] });
+        }
+        return httpResponse(req, res, 200, apiMessages.admin.companiesFound, companies);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req);
     }
 };
 // get a single company by ID
-export const getCompanyById = (_: Request, res: Response, next: NextFunction) => {
+export const getCompanyById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Get company by ID not implemented yet' });
+        const { id } = await req.body;
+        if (id) {
+            httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+
+        const company = await prisma.company.findUnique({
+            where: { id },
+
+            select: {
+                fullName: true,
+                email: true,
+                phone: true,
+                username: true,
+                companyId: true,
+                plan: true,
+                maxEmployees: true,
+                accountType: true,
+                role: true,
+                status: true,
+                isVerified: true
+            }
+        });
+
+        if (!company) {
+            httpResponse(req, res, 404, apiMessages.admin.noCompanyFound);
+        }
+        return httpResponse(req, res, 200, apiMessages.admin.companyFound, company);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 // update a company

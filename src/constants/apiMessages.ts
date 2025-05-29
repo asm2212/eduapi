@@ -56,7 +56,11 @@ const apiMessages = {
         adminUpdated: 'Admin updated',
         adminDeleted: 'Admin deleted',
         adminNotFound: 'Admin not found',
-        adminAlreadyExists: 'Admin already exists'
+        adminAlreadyExists: 'Admin already exists',
+        companiesFound: 'Companies Found',
+        noCompaniesFound: 'No Companies Found',
+        companyFound: 'Company Found',
+        noCompanyFound: 'No Company Found'
     },
 
     // Course-Specific Messages

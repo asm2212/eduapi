@@ -96,13 +96,20 @@ export const companyLogin = async (req: Request, res: Response, next: NextFuncti
         });
 
         return httpResponse(req, res, 200, apiMessages.success.loggedIn, {
-            admin: {
+            company: {
                 id: company.id,
                 fullName: company.fullName,
                 email: company.email,
                 phone: company.phone,
                 address: company.address,
                 accountType: company.accountType,
+                industry: company.industry,
+                social: company.socialLinks,
+                logo: company.companyLogo,
+                description: company.description,
+                website: company.website,
+                plan: company.plan,
+                maxEmployees: company.maxEmployees,
                 role: company.role,
                 status: company.status,
                 isVerified: company.isVerified,
@@ -152,6 +159,15 @@ export const updateCompanyProfile = async (req: Request, res: Response, next: Ne
                 email: true,
                 phone: true,
                 address: true,
+                socialLinks: true,
+                website: true,
+                username: true,
+                industry: true,
+                description: true,
+                companyLogo: true,
+                companyId: true,
+                plan: true,
+                maxEmployees: true,
                 accountType: true,
                 role: true,
                 status: true,
