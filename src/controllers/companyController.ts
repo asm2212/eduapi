@@ -20,7 +20,7 @@ export const companySignup = async (req: Request, res: Response, next: NextFunct
         // Validate and parse request body
         const { fullName, email, phone, password } = await companySignupSchema.parseAsync(req.body);
 
-        // Check if admin already exists
+        // Check if company already exists
         const company = await prisma.admin.findUnique({
             where: { email }
         });
@@ -129,11 +129,21 @@ export const companyLogin = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-export const companyLogout = (_: Request, res: Response, next: NextFunction): void => {
+export const companyLogout = (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Company logout not implemented yet' });
+        res.clearCookie('refreshToken', {
+            httpOnly: true, // Important: must match cookie options from setting
+            // secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict', // Important: must match cookie options from setting
+            path: '/' // If your cookie had a path set, include it hereAdd commentMore actions
+        });
+        return httpResponse(req, res, 200, apiMessages.success.loggedOut, { data: [] });
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        if (error instanceof z.ZodError) {
+            return httpResponse(req, res, 400, apiMessages.error.validationError, { errors: error.errors });
+        }
+        // Handle other errors using httpError
+        return httpError(next, error, req, 500);
     }
 };
 

@@ -4,6 +4,7 @@ import {
     adminChangeCompanyPlan,
     adminChangePasswordSchema,
     adminChangeStatus,
+    adminCreateCompany,
     adminLoginSchema,
     adminSignupSchema,
     adminUpdateSchema
@@ -19,6 +20,7 @@ import { UserPayload } from '../types/tokensType';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { companyUpdateSchema } from '../validator/companyValidator';
 import logger from '../utils/logger';
+import generateShortId from '../utils/uIds';
 const prisma = new PrismaClient();
 
 // amdin authentication controllers
@@ -131,7 +133,13 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
 
 export const adminLogout = (req: Request, res: Response, next: NextFunction): void => {
     try {
-        res.status(501).json({ message: 'Admin logout not implemented yet' });
+        res.clearCookie('refreshToken', {
+            httpOnly: true, // Important: must match cookie options from setting
+            // secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict', // Important: must match cookie options from setting
+            path: '/' // If your cookie had a path set, include it hereAdd commentMore actions
+        });
+        return httpResponse(req, res, 200, apiMessages.success.loggedOut, { data: [] });
     } catch (error) {
         if (error instanceof z.ZodArray) {
             return httpResponse(req, res, 400, apiMessages.error.validationError, {
@@ -261,11 +269,46 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
 // company management
 
 // create a new company
-export const createCompany = (_: Request, res: Response, next: NextFunction) => {
+export const createCompany = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Create company not implemented yet' });
+        const { fullName, email, phone, password, industry, username, description, plan, maxEmployees } = await adminCreateCompany.parseAsync(
+            req.body
+        );
+
+        // Check if comapny already existsAdd commentMore actions
+        const company = await prisma.admin.findUnique({
+            where: { email }
+        });
+
+        if (company) {
+            return httpResponse(req, res, 400, apiMessages.auth.emailAlreadyInUse);
+        }
+
+        const hashedPassword = await hashPassword(password);
+        const compId = generateShortId();
+
+        const newCompany = await prisma.company.create({
+            data: {
+                fullName,
+                email,
+                phone,
+                companyId: compId,
+                password: hashedPassword,
+                industry,
+                username,
+                description,
+                plan,
+                maxEmployees
+            }
+        });
+        return httpResponse(req, res, 201, apiMessages.company.companyCreated, { data: newCompany });
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        // Handle validation errors
+        if (error instanceof z.ZodError) {
+            return httpResponse(req, res, 400, 'Validation Error', { errors: error.errors });
+        }
+        // Handle other errors using httpError
+        return httpError(next, error, req, 500);
     }
 };
 

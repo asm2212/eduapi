@@ -1,76 +1,106 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserPayload } from '../types/tokensType';
-import { verifyAccessToken } from '../utils/tokens/tokens';
+import { generateTokens, verifyAccessToken, verifyRefreshToken } from '../utils/tokens/tokens';
 import logger from '../utils/logger';
 import apiMessages from '../constants/apiMessages';
 
 // Extend Request interface to include tokenValue property
-
 declare module 'express-serve-static-core' {
     interface Request {
         user?: UserPayload;
     }
 }
 
+// Main middleware to protect routes
 export const protect = (req: Request, res: Response, next: NextFunction) => {
-    let token;
-    // Check if the Authorization header exists and starts with "Bearer "
+    let accessToken: string | undefined;
+    let refreshToken: string | undefined;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-        try {
-            // Extract the token (remove "Bearer ")
-            token = req.headers.authorization.split(' ')[1];
+    // 1. Extract Access Token from Authorization header
+    if (req.headers.authorization?.startsWith('Bearer ')) {
+        accessToken = req.headers.authorization.split(' ')[1];
+    }
 
-            // Verify the token
-            const decoded = verifyAccessToken(token);
+    // 2. Extract Refresh Token from cookies
+    if (req.cookies?.refreshToken) {
+        refreshToken = req.cookies.refreshToken;
+    }
 
-            if (decoded) {
-                // Type guard and type assertion
+    // 3. If no tokens, return unauthorized
+    if (!accessToken && !refreshToken) {
+        return res.status(401).json({ message: apiMessages.auth.unauthenticated });
+    }
 
-                if (typeof decoded === 'object' && 'id' in decoded && 'role' in decoded && 'accountType' in decoded) {
-                    req.user = decoded as UserPayload;
-
-                    return next();
-                } else {
-                    logger.error('Invalid token payload structure:', decoded); // Log the incorrect payload
-
-                    return res.status(401).json({ message: apiMessages.auth.invalidTokenFormat });
-                }
-            } else {
-                return res.status(401).json({ message: apiMessages.auth.invalidToken });
+    try {
+        // 4a. Try verifying access token
+        if (accessToken) {
+            const decoded = verifyAccessToken(accessToken);
+            if (decoded && typeof decoded === 'object' && 'id' in decoded && 'role' in decoded && 'accountType' in decoded) {
+                req.user = decoded as UserPayload;
+                return next();
             }
-        } catch (error) {
-            logger.error('JWT Verification Error:', error); // Log the error on the server
-
-            return res.status(401).json({ message: apiMessages.auth.invalidToken }); // Return a 401 even if there is an error during verification
         }
-    } else {
+
+        // 4b. Try verifying refresh token
+        if (refreshToken) {
+            const decodedRefreshToken = verifyRefreshToken(refreshToken);
+            if (
+                decodedRefreshToken &&
+                typeof decodedRefreshToken === 'object' &&
+                'id' in decodedRefreshToken &&
+                'role' in decodedRefreshToken &&
+                'accountType' in decodedRefreshToken
+            ) {
+                // Generate new tokens
+                const newTokens = generateTokens({
+                    id: decodedRefreshToken.id,
+                    role: decodedRefreshToken.role,
+                    accountType: decodedRefreshToken.accountType
+                });
+
+                // Set new tokens
+                res.setHeader('Authorization', `Bearer ${newTokens.accessToken}`);
+                res.cookie('refreshToken', newTokens.refreshToken, {
+                    httpOnly: true,
+                    sameSite: 'strict',
+                    path: '/',
+                    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+                });
+
+                req.user = decodedRefreshToken as UserPayload;
+                return next();
+            } else {
+                res.clearCookie('refreshToken');
+                return res.status(401).json({ message: apiMessages.auth.tokenExpired });
+            }
+        }
+
+        return res.status(401).json({ message: apiMessages.auth.unauthenticated });
+    } catch (error) {
+        logger.error('JWT Verification Error:', error);
         return res.status(401).json({ message: apiMessages.auth.invalidToken });
     }
 };
 
+// Middleware for admin-only access
 export const protectAdmin = (req: Request, res: Response, next: NextFunction) => {
-    protect(req, res, (err) => {
-        if (err) {
-            return next(err);
-        }
-        if (req.user && req.user.role === 'ADMIN') {
-            next();
+    protect(req, res, () => {
+        if (req.user?.role === 'ADMIN') {
+            return next();
         } else {
             return res.status(403).json({ message: apiMessages.error.unauthorized });
         }
     });
 };
 
+// Middleware for company-only access
 export const protectCompany = (req: Request, res: Response, next: NextFunction) => {
-    protect(req, res, (err) => {
-        if (err) {
-            return next(err);
-        }
-        if (req.user && req.user.role === 'COMPANY') {
-            next();
+    protect(req, res, () => {
+        if (req.user?.role === 'COMPANY') {
+            return next();
         } else {
             return res.status(403).json({ message: apiMessages.error.unauthorized });
         }
     });
 };
+

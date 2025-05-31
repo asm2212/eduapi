@@ -24,6 +24,18 @@ export const adminChangePasswordSchema = z.object({
     newPassword: zodSchemas.passwordSchema
 });
 
+export const adminCreateCompany = z.object({
+    fullName: zodSchemas.nameSchema,
+    email: zodSchemas.emailSchema,
+    phone: zodSchemas.phoneSchema.optional(),
+    password: zodSchemas.passwordSchema,
+    industry: zodSchemas.industry.optional(),
+    username: zodSchemas.username.optional(),
+    description: zodSchemas.description.optional(),
+    plan: zodSchemas.plan.optional(),
+    maxEmployees: zodSchemas.maxEmployees.optional()
+});
+
 export const adminChangeStatus = z.object({
     status: zodSchemas.status
 });
