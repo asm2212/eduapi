@@ -61,6 +61,7 @@ enum PlanType {
   BASIC // upto 50 employees
   STANDARD // upto 100 employees
   PREMIUM // upto 250 employees
+  CUSTOM
 }
 
 model Admin {
@@ -112,7 +113,7 @@ model Company {
   updatedAt           DateTime    @updatedAt
 
    // plan information
-  plan         PlanType @default(TRIAL)
+  plan         PlanType? @default(TRIAL)
   maxEmployees String?
 
   // Relationships

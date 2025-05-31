@@ -1,6 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
-import { adminChangePasswordSchema, adminLoginSchema, adminSignupSchema, adminUpdateSchema } from '../validator/adminValidator';
+import {
+    adminChangeCompanyPlan,
+    adminChangePasswordSchema,
+    adminChangeStatus,
+    adminLoginSchema,
+    adminSignupSchema,
+    adminUpdateSchema
+} from '../validator/adminValidator';
 import httpResponse from '../utils/httpResponse';
 import z from 'zod';
 import httpError from '../utils/httpError';
@@ -11,6 +18,7 @@ import { generateTokens } from '../utils/tokens/tokens';
 import { UserPayload } from '../types/tokensType';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { companyUpdateSchema } from '../validator/companyValidator';
+import logger from '../utils/logger';
 const prisma = new PrismaClient();
 
 // amdin authentication controllers
@@ -358,15 +366,16 @@ export const deleteCompany = (_: Request, res: Response, next: NextFunction) => 
 };
 
 // block a company
-export const blockCompany = async (req: Request, res: Response, next: NextFunction) => {
+export const changeCompanyStatus = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { companyId } = req.params;
         if (!companyId) {
             return httpResponse(req, res, 400, apiMessages.error.invalidInput);
         }
+        const { status } = await adminChangeStatus.parseAsync(req.body);
         await prisma.company.update({
             where: { id: companyId },
-            data: { status: 'BLOCKED' }
+            data: { status: status }
         });
         return httpResponse(req, res, 200, apiMessages.auth.blocked);
     } catch (error) {
@@ -374,62 +383,78 @@ export const blockCompany = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-// activate a company
-export const activateCompany = async (req: Request, res: Response, next: NextFunction) => {
+// change a company plan
+export const changeCompanyPlan = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { companyId } = req.params;
         if (!companyId) {
             return httpResponse(req, res, 400, apiMessages.error.invalidInput);
         }
+        const { plan, maxEmployees } = await adminChangeCompanyPlan.parseAsync(req.body);
         await prisma.company.update({
             where: { id: companyId },
-            data: { status: 'ACTIVE' }
+            data: {
+                plan,
+                maxEmployees
+            }
         });
-        return httpResponse(req, res, 200, apiMessages.auth.active);
+        return httpResponse(req, res, 200, apiMessages.company.companyPlanChange);
     } catch (error) {
-        return httpError(next, error, req, 500);
-    }
-};
-
-// deactivate a company
-export const deactivateCompany = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { companyId } = req.params;
-        if (!companyId) {
-            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+            return httpResponse(req, res, 404, apiMessages.company.companyNotFound);
+        } else if (error instanceof z.ZodError) {
+            return httpResponse(req, res, 400, apiMessages.error.validationError, { errors: error.errors });
         }
-        await prisma.company.update({
-            where: { id: companyId },
-            data: { status: 'INACTIVE' }
-        });
-        return httpResponse(req, res, 200, apiMessages.auth.deactivate);
-    } catch (error) {
         return httpError(next, error, req, 500);
-    }
-};
-
-export const changeCompanyPlan = async (_: Request, __: Response, next: NextFunction) => {
-    try {
-    } catch (error) {
-        next(error);
     }
 };
 
 // get employees of a specific company
-export const getCompanyEmployees = async (_: Request, res: Response, next: NextFunction) => {
+export const getCompanyEmployees = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Get company employees not implemented yet' });
+        const { companyId } = req.params;
+        if (!companyId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+
+        const employees = await prisma.employee.findMany({
+            where: { companyId: companyId }
+        });
+
+        if (!employees) {
+            return httpResponse(req, res, 404, apiMessages.employee.employeesNotFound);
+        }
+        return httpResponse(req, res, 200, apiMessages.employee.employeesFound, employees);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+            return httpResponse(req, res, 404, apiMessages.company.companyNotFound);
+        }
+        return httpError(next, error, req, 500);
     }
 };
 
 // get a specific employee of a specific company
-export const getCompanyEmployeeById = async (_: Request, res: Response, next: NextFunction) => {
+export const getCompanyEmployeeById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Get company employee by ID not implemented yet' });
+        const { companyId, employeeId } = req.params;
+        if (!companyId && !employeeId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        const employee = await prisma.employee.findUnique({
+            where: {
+                companyId,
+                id: employeeId
+            }
+        });
+        if (!employee) {
+            return httpResponse(req, res, 404, apiMessages.employee.employeeNotFound);
+        }
+        return httpResponse(req, res, 200, apiMessages.employee.employeeFound, employee);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+            return httpResponse(req, res, 404, apiMessages.company.companyNotFound);
+        }
+        return httpError(next, error, req, 500);
     }
 };
 
@@ -444,21 +469,47 @@ export const createEmployee = async (_: Request, res: Response, next: NextFuncti
     }
 };
 // get all employees
-export const getEmployees = async (_: Request, res: Response, next: NextFunction) => {
+export const getEmployees = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Get employees not implemented yet' });
+        const employees = await prisma.employee.findMany();
+        // Check if employees array is empty, not if it's null/undefined
+        if (employees.length === 0) {
+            return httpResponse(req, res, 200, apiMessages.employee.employeesNotFound, { data: [] }); // Return empty array with 200 OKAdd commentMore actions
+        }
+        return httpResponse(req, res, 200, apiMessages.employee.employeesFound, { data: employees }); // Return data in object
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        if (error instanceof PrismaClientKnownRequestError) {
+            logger.error('Prisma Error in getEmployees:', error);
+        }
+        return httpError(next, error, req, 500);
     }
 };
+
 // get a single employee by ID
-export const getEmployeeById = async (_: Request, res: Response, next: NextFunction) => {
+export const getEmployeeById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Get employee by ID not implemented yet' });
+        const { employeeId } = req.params;
+        if (!employeeId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        const employee = await prisma.employee.findUnique({
+            where: {
+                id: employeeId
+            }
+        });
+
+        if (!employee) {
+            return httpResponse(req, res, 404, apiMessages.employee.employeeNotFound, { data: [] });
+        }
+        return httpResponse(req, res, 200, apiMessages.employee.employeeFound, { data: employee });
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+            return httpResponse(req, res, 404, apiMessages.employee.employeeNotFound);
+        }
+        return httpError(next, error, req, 500);
     }
 };
+
 // update an employee
 export const updateEmployee = async (_: Request, res: Response, next: NextFunction) => {
     try {
@@ -483,12 +534,39 @@ export const blockEmployee = async (_: Request, res: Response, next: NextFunctio
         next(error); // Important: Pass errors to the error handling middleware
     }
 };
-// activate an employee
-export const activateEmployee = async (_: Request, res: Response, next: NextFunction) => {
+// change status of employee
+export const changeEmployeeStatus = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Activate employee not implemented yet' });
+        const { employeeId } = req.params;
+        if (!employeeId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        const { status } = await adminChangeStatus.parseAsync(req.body);
+        const updatedEmployee = await prisma.employee.update({
+            where: { id: employeeId },
+            data: { status },
+            select: { status: true } // Select the updated status
+        });
+        if (!updatedEmployee) {
+            return httpResponse(req, res, 404, apiMessages.employee.employeeNotFound);
+        }
+        let responseMessage: string;
+
+        if (updatedEmployee.status === 'BLOCKED') {
+            responseMessage = apiMessages.employee.employeeBlock; // Assignment (=), not comparison (===)
+        } else if (updatedEmployee.status === 'ACTIVE') {
+            responseMessage = apiMessages.employee.employeeActive; // Assignment (=)
+        } else if (updatedEmployee.status === 'INACTIVE') {
+            responseMessage = apiMessages.employee.employeeInactive; // Assignment (=)
+        } else {
+            responseMessage = apiMessages.employee.employeeUpdated; // Default message
+        }
+        return httpResponse(req, res, 200, responseMessage);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+            return httpResponse(req, res, 404, apiMessages.employee.employeeNotFound);
+        }
+        return httpError(next, error, req, 500);
     }
 };
 // deactivate an employee
@@ -551,8 +629,9 @@ export const activateIndividual = async (_: Request, res: Response, next: NextFu
         next(error); // Important: Pass errors to the error handling middleware
     }
 };
-// deactivate an individual
-export const deactivateIndividual = async (_: Request, res: Response, next: NextFunction) => {
+
+/** Change status of an individual. */
+export const changeIndividualStatus = async (_: Request, res: Response, next: NextFunction) => {
     try {
         res.status(501).json({ message: 'Deactivate individual not implemented yet' });
     } catch (error) {

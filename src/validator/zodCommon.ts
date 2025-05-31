@@ -28,6 +28,14 @@ enum Departments {
     Compliance = 'Compliance'
 }
 
+enum PlanType {
+    TRIAL = 'TRIAL',
+    BASIC = 'BASIC',
+    STANDARD = 'STANDARD',
+    PREMIUM = 'PREMIUM',
+    CUSTOM = 'CUSTOM'
+}
+
 // Reusable Zod string schemas with common validations
 export const zodSchemas = {
     nameSchema: z.string().min(3, ZodErrorMessages.NAME_MIN),
@@ -60,6 +68,8 @@ export const zodSchemas = {
         github: z.string().url(ZodErrorMessages.WEBSITE_INVALID).optional(),
         gitlab: z.string().url(ZodErrorMessages.WEBSITE_INVALID).optional()
     }),
+    plan: z.nativeEnum(PlanType),
+    maxEmployees: z.string(),
     companyId: z.string(),
     empId: z.string(),
     department: z.nativeEnum(Departments),

@@ -24,7 +24,12 @@ export const adminChangePasswordSchema = z.object({
     newPassword: zodSchemas.passwordSchema
 });
 
+export const adminChangeStatus = z.object({
+    status: zodSchemas.status
+});
+
 export const adminChangeCompanyPlan = z.object({
-    plan: z.enum(['TRIAL', 'BASIC', 'STANDARD', 'PREMIUM'])
+    plan: zodSchemas.plan.optional(),
+    maxEmployees: zodSchemas.maxEmployees.optional()
 });
 

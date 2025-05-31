@@ -1,20 +1,15 @@
 import { Router } from 'express';
 import {
-    activateCompany,
-    activateEmployee,
-    activateIndividual,
     adminLogin,
     adminLogout,
     adminSignup,
-    blockCompany,
-    blockEmployee,
-    blockIndividual,
+    changeCompanyPlan,
+    changeCompanyStatus,
+    changeEmployeeStatus,
+    changeIndividualStatus,
     changePassword,
     createCompany,
     createEmployee,
-    deactivateCompany,
-    deactivateEmployee,
-    deactivateIndividual,
     deleteCompany,
     deleteEmployee,
     deleteIndividual,
@@ -61,9 +56,8 @@ adminRouter
     .patch(updateCompany) // update a company
     .delete(deleteCompany); // delete a company
 
-adminRouter.patch('/companies/:companyId/block', blockCompany); // block a company
-adminRouter.patch('/companies/:companyId/activate', activateCompany); // activate a company
-adminRouter.patch('/companies/:companyId/deaactivate', deactivateCompany);
+adminRouter.patch('/companies/:companyId/change-plan', changeCompanyPlan);
+adminRouter.patch('/companies/:companyId/change-status', changeCompanyStatus); // Block a company
 
 adminRouter.get('/companies/:companyId/employees', getCompanyEmployees); // Get employees of a company
 adminRouter.get('/companies/:companyId/employees/:employeeId', getCompanyEmployeeById); // Get a specific employee of a company
@@ -81,9 +75,7 @@ adminRouter
     .patch(updateEmployee) // Update an employee
     .delete(deleteEmployee); // Delete an employee
 
-adminRouter.patch('/employees/:employeeId/block', blockEmployee); // Block an employee
-adminRouter.patch('/employees/:employeeId/activate', activateEmployee); // Activate an employee
-adminRouter.patch('/employees/:employeeId/deactivate', deactivateEmployee); // Deactivate an employee
+adminRouter.patch('/employees/:employeeId/change-status', changeEmployeeStatus); // Change status of employee
 
 // Individual Management
 adminRouter.route('/individuals').get(getIndividuals); // Get all individuals
@@ -94,9 +86,7 @@ adminRouter
     .patch(updateIndividual) // Update an individual
     .delete(deleteIndividual); // Delete an individual
 
-adminRouter.patch('/individuals/:individualId/block', blockIndividual); // Block an individual
-adminRouter.patch('/individuals/:individualId/activate', activateIndividual); // Activate an individual
-adminRouter.patch('/individuals/:individualId/deactivate', deactivateIndividual); // Deactivate an individual
+adminRouter.patch('/individuals/:individualId/change-status', changeIndividualStatus); // Block an individual
 
 export default adminRouter;
 

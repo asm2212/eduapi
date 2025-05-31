@@ -100,7 +100,8 @@ const apiMessages = {
         companyCreated: 'Company created',
         companyUpdated: 'Company updated',
         companyDeleted: 'Company deleted',
-        companyNotFound: 'Company not found'
+        companyNotFound: 'Company not found',
+        companyPlanChange: 'Plan changed'
     },
 
     // Employee-Specific Messages (If applicable to your LMS)
@@ -111,7 +112,10 @@ const apiMessages = {
         employeeNotFound: 'Employee not found',
         employeesNotFound: 'Employees not found',
         employeesFound: 'Employees found',
-        employeeFound: 'Employee found'
+        employeeFound: 'Employee found',
+        employeeBlock: 'Employee Blocked',
+        employeeInactive: 'Employee Inactive',
+        employeeActive: 'Employee Active'
     },
 
     // Payment related messages
