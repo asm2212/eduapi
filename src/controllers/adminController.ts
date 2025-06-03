@@ -141,12 +141,8 @@ export const adminLogout = (req: Request, res: Response, next: NextFunction): vo
         });
         return httpResponse(req, res, 200, apiMessages.success.loggedOut, { data: [] });
     } catch (error) {
-        if (error instanceof z.ZodArray) {
-            return httpResponse(req, res, 400, apiMessages.error.validationError, {
-                errors: error.errors
-            });
-        }
-        //
+        // Handle other errors using httpErrorAdd commentMore actions
+
         return httpError(next, error, req, 500);
     }
 };

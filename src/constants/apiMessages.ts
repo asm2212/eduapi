@@ -1,6 +1,7 @@
 const apiMessages = {
     // General Success Messages
     success: {
+        signupSuccess: 'Signup Success',
         created: 'Created successfully',
         updated: 'Updated successfully',
         deleted: 'Deleted successfully',

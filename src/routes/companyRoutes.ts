@@ -1,13 +1,11 @@
 import { Router } from 'express';
 import {
-    activateEmployee,
-    blockEmployee,
+    changeEmployeeStatus,
     changePassword,
     companyLogin,
     companyLogout,
     companySignup,
     createEmployee,
-    deactivateEmployee,
     deleteEmployee,
     getCompanyProfile,
     getEmployeeById,
@@ -60,11 +58,7 @@ companyRouter
 
     .delete(deleteEmployee); // Delete an employee of the company
 
-companyRouter.patch('/employees/:employeeId/block', blockEmployee); // Block an employee of the company
-
-companyRouter.patch('/employees/:employeeId/activate', activateEmployee); // Activate an employee of the company
-
-companyRouter.patch('/employees/:employeeId/deactivate', deactivateEmployee); // Deactivate an employee of the company
+companyRouter.patch('/employees/:employeeId/change-status', changeEmployeeStatus); // Change Employee Status
 
 // Invitations (For inviting new employees)
 

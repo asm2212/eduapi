@@ -12,12 +12,14 @@ import employeeRouter from './routes/employeeRoutes';
 import rateLimit from 'express-rate-limit';
 // import compression from 'compression';
 import cookieParser from 'cookie-parser';
+import individualRouter from './routes/individualRoutes';
+import compression from 'compression';
 
 const app: Application = express();
 
 // Middleware
 //compress response for all routes
-// app.use(compression());
+app.use(compression());
 app.use(cookieParser());
 app.use(helmet());
 // app.use(
@@ -54,6 +56,7 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/company', companyRouter);
 app.use('/api/v1/employee', employeeRouter);
+app.use('/api/v1/individual', individualRouter); // individual router
 
 // 404 Handler
 app.use((req: Request, _: Response, next: NextFunction) => {

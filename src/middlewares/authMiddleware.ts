@@ -104,3 +104,15 @@ export const protectCompany = (req: Request, res: Response, next: NextFunction) 
     });
 };
 
+export const protectEmployee = (req: Request, res: Response, next: NextFunction) => {
+    protect(req, res, (err) => {
+        if (err) {
+            return next(err);
+        }
+        if (req.user && req.user.role === 'EMPLOYEE') {
+            next();
+        } else {
+            return res.status(403).json({ message: apiMessages.error.unauthorized });
+        }
+    });
+};

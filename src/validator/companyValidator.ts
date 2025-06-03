@@ -28,3 +28,20 @@ export const companyChangePasswordSchema = z.object({
     oldPassword: z.string(),
     newPassword: zodSchemas.passwordSchema
 });
+
+export const companyEmployeeUpdateSchema = z.object({
+    email: zodSchemas.emailSchema.optional(),
+    fullName: zodSchemas.nameSchema.optional(),
+    department: zodSchemas.department.optional(),
+    dateOfBirth: zodSchemas.dateOfBirth.optional(),
+    address: zodSchemas.addressSchema.optional(),
+    gender: zodSchemas.gender.optional(),
+    jobTitle: zodSchemas.jobTitle.optional(),
+    description: zodSchemas.description.optional(),
+    phone: zodSchemas.phoneSchema.optional(),
+    socialLinks: zodSchemas.socialLinks.optional()
+});
+
+export const companyChangeStatus = z.object({
+    status: zodSchemas.status
+});
