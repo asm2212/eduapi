@@ -14,6 +14,7 @@ import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import individualRouter from './routes/individualRoutes';
 import compression from 'compression';
+import hpp from 'hpp';
 
 const app: Application = express();
 
@@ -21,19 +22,40 @@ const app: Application = express();
 //compress response for all routes
 app.use(compression());
 app.use(cookieParser());
-app.use(helmet());
-// app.use(
-//     cors({
-//         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-//         origin: ['*'],
-//         credentials: true
-//     })
-// );
 
-// app.use(express.json({ limit: '16kb' })); // Limit JSON body size to 16kb
-// app.use(express.urlencoded({ extended: true, limit: '16kb' })); // Limit URL-encoded body size to 16kb
+//security middleware
+app.use(helmet());
+
+// Cross-Site Scripting (XSS) by controlling where resources can be loaded from
+app.use(
+    helmet.contentSecurityPolicy({
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", 'data:'],
+            connectSrc: ["'self'"],
+            fontSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: []
+        }
+    })
+);
+// XSS (Cross-Site Scripting) Protection
+app.use(helmet.xssFilter()); // Enable XSS protection filter
+// HSTS ensures browsers only communicate with your server over HTTPS
+app.use(
+    helmet.hsts({
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true, // Include subdomains
+        preload: true // Optional: for preloading HSTS with browsers
+    })
+);
+// Setting a strict referrer policy can prevent leaking sensitive information in the Referer header to other domains
+app.use(helmet.referrerPolicy({ policy: 'strict-origin-when-cross-origin' }));
+app.disable('x-powered-by');
 app.use(cors());
-app.use(express.json()); // Parse JSON bodies
+app.use(express.json({ limit: '25kb' })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true, limit: '25kb' })); // Parse URL-encoded bodies
 // Rate Limiting Configuration
 const rateLimiter = rateLimit({
@@ -46,6 +68,9 @@ const rateLimiter = rateLimit({
         message: 'Too many requests from this IP, please try again later.'
     }
 });
+
+// Protect against HPP, should come before any routesAdd commentMore actions
+app.use(hpp());
 
 // Apply rate limiting globally
 app.use(rateLimiter);

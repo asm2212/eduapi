@@ -102,7 +102,10 @@ const apiMessages = {
         companyUpdated: 'Company updated',
         companyDeleted: 'Company deleted',
         companyNotFound: 'Company not found',
-        companyPlanChange: 'Plan changed'
+        companyPlanChange: 'Plan changed',
+        companyBlock: 'Company Blocked',
+        companyInactive: 'Company Inactive',
+        companyActive: 'Company Active'
     },
 
     // Employee-Specific Messages (If applicable to your LMS)

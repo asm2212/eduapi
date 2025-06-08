@@ -18,9 +18,10 @@ import comparePassword from '../utils/comparePassword';
 import { generateTokens } from '../utils/tokens/tokens';
 import { UserPayload } from '../types/tokensType';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { companyUpdateSchema } from '../validator/companyValidator';
 import logger from '../utils/logger';
 import generateShortId from '../utils/uIds';
+import { employeeSignupSchema } from '../validator/employeeValidator';
+import { companyEmployeeUpdateSchema, companyUpdateSchema } from '../validator/companyValidator';
 const prisma = new PrismaClient();
 
 // amdin authentication controllers
@@ -412,11 +413,26 @@ export const changeCompanyStatus = async (req: Request, res: Response, next: Nex
             return httpResponse(req, res, 400, apiMessages.error.invalidInput);
         }
         const { status } = await adminChangeStatus.parseAsync(req.body);
-        await prisma.company.update({
+        const updatedCompany = await prisma.company.update({
             where: { id: companyId },
             data: { status: status }
         });
-        return httpResponse(req, res, 200, apiMessages.auth.blocked);
+        if (!updatedCompany) {
+            return httpResponse(req, res, 404, apiMessages.company.companyNotFound);
+        }
+
+        let responseMessage: string;
+
+        if (updatedCompany.status === 'BLOCKED') {
+            responseMessage = apiMessages.company.companyBlock; // Assignment (=), not comparison (===)
+        } else if (updatedCompany.status === 'ACTIVE') {
+            responseMessage = apiMessages.company.companyActive; // Assignment (=)
+        } else if (updatedCompany.status === 'INACTIVE') {
+            responseMessage = apiMessages.company.companyInactive; // Assignment (=)
+        } else {
+            responseMessage = apiMessages.company.companyUpdated; // Default message
+        }
+        return httpResponse(req, res, 200, responseMessage);
     } catch (error) {
         return httpError(next, error, req, 500);
     }
@@ -500,11 +516,30 @@ export const getCompanyEmployeeById = async (req: Request, res: Response, next: 
 // Employee management
 
 // create a new employee
-export const createEmployee = async (_: Request, res: Response, next: NextFunction) => {
+export const createEmployee = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Create employee not implemented yet' });
+        const { companyId } = req.params;
+        const employeeData = await employeeSignupSchema.parseAsync(req.body);
+        // Check if the company exists
+        const company = await prisma.company.findUnique({ where: { id: companyId } });
+        if (!company) {
+            return httpResponse(req, res, 404, apiMessages.company.companyNotFound);
+        }
+        // Hash the passwordAdd commentMore actions
+        const hashedPassword = await hashPassword(employeeData.password);
+        // Create the employee
+        const employee = await prisma.employee.create({
+            data: {
+                ...employeeData,
+                password: hashedPassword,
+                companyId: company.id
+            }
+        });
+        return httpResponse(req, res, 202, apiMessages.employee.employeeCreated, {
+            data: employee
+        });
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 // get all employees
@@ -550,13 +585,31 @@ export const getEmployeeById = async (req: Request, res: Response, next: NextFun
 };
 
 // update an employee
-export const updateEmployee = async (_: Request, res: Response, next: NextFunction) => {
+export const updateEmployee = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Update employee not implemented yet' });
+        const { employeeId } = req.params;
+        const employeeData = await companyEmployeeUpdateSchema.parseAsync(req.body);
+        const employee = await prisma.employee.findUnique({
+            where: {
+                id: employeeId
+            }
+        });
+
+        if (!employee) {
+            return httpResponse(req, res, 404, apiMessages.employee.employeeNotFound, { data: [] });
+        }
+        await prisma.employee.update({
+            where: {
+                id: employee.id
+            },
+            data: employeeData
+        });
+        return httpResponse(req, res, 200, apiMessages.success.updated);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
+
 // delete an employee
 export const deleteEmployee = async (_: Request, res: Response, next: NextFunction) => {
     try {

@@ -387,11 +387,25 @@ export const changeEmployeeStatus = async (req: Request, res: Response, next: Ne
             return httpResponse(req, res, 400, apiMessages.error.invalidInput);
         }
         const { status } = await companyChangeStatus.parseAsync(req.body);
-        await prisma.employee.update({
+        const updatedEmployee = await prisma.employee.update({
             where: { id: employeeId },
-            data: { status: status }
+            data: { status },
+            select: { status: true } // Select the updated status
         });
-        return httpResponse(req, res, 200, apiMessages.auth.blocked);
+        if (!updatedEmployee) {
+            return httpResponse(req, res, 404, apiMessages.employee.employeeNotFound);
+        }
+        let responseMessage: string;
+        if (updatedEmployee.status === 'BLOCKED') {
+            responseMessage = apiMessages.employee.employeeBlock; // Assignment (=), not comparison (===)
+        } else if (updatedEmployee.status === 'ACTIVE') {
+            responseMessage = apiMessages.employee.employeeActive; // Assignment (=)
+        } else if (updatedEmployee.status === 'INACTIVE') {
+            responseMessage = apiMessages.employee.employeeInactive; // Assignment (=)
+        } else {
+            responseMessage = apiMessages.employee.employeeUpdated; // Default message
+        }
+        return httpResponse(req, res, 200, responseMessage);
     } catch (error) {
         return httpError(next, error, req, 500);
     }

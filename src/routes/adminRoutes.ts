@@ -59,15 +59,14 @@ adminRouter
 adminRouter.patch('/companies/:companyId/change-plan', changeCompanyPlan);
 adminRouter.patch('/companies/:companyId/change-status', changeCompanyStatus); // Block a company
 
-adminRouter.get('/companies/:companyId/employees', getCompanyEmployees); // Get employees of a company
+adminRouter
+    .route('/companies/:companyId/employees')
+    .get(getCompanyEmployees) // Get employees of a companyAdd commentMore actions
+    .post(createEmployee);
 adminRouter.get('/companies/:companyId/employees/:employeeId', getCompanyEmployeeById); // Get a specific employee of a company
 
 // Employee Management (Independent of Companies)
-
-adminRouter
-    .route('/employees')
-    .post(createEmployee) // Create a new employee
-    .get(getEmployees); // Get all employees
+adminRouter.route('/employees').get(getEmployees); // Get all employees
 
 adminRouter
     .route('/employees/:employeeId')
