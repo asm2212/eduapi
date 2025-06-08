@@ -35,3 +35,11 @@ export const employeeChangePasswordSchema = z.object({
     oldPassword: z.string(),
     newPassword: zodSchemas.passwordSchema
 });
+
+export const employeeEmailSchema = z.object({
+    email: zodSchemas.emailSchema
+});
+
+export const employeePasswordSchema = z.object({
+    password: zodSchemas.passwordSchema
+});

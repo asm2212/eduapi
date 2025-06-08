@@ -2,8 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import {
     companyChangePasswordSchema,
     companyChangeStatus,
+    companyEmailSchema,
     companyEmployeeUpdateSchema,
     companyLoginSchema,
+    companyPasswordSchema,
     companySignupSchema
 } from '../validator/companyValidator';
 import apiMessages from '../constants/apiMessages';
@@ -15,9 +17,18 @@ import httpError from '../utils/httpError';
 import z from 'zod';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { UserPayload } from '../types/tokensType';
-import { generateTokens } from '../utils/tokens/tokens';
+import {
+    generateForgetPasswordToken,
+    generateTokens,
+    generateVerificationToken,
+    verifyForgetPasswordToken,
+    verifyVerificationToken
+} from '../utils/tokens/tokens';
 import comparePassword from '../utils/comparePassword';
 import { employeeSignupSchema } from '../validator/employeeValidator';
+import verificationCodeMail from '../services/emails/general/verficationCode';
+import forgetPasswordMail from '../services/emails/general/forgotPassword';
+import sendInvitationMail from '../services/emails/company/sendInvitation';
 const prisma = new PrismaClient();
 
 //company authentication controllers
@@ -284,6 +295,8 @@ export const createEmployee = async (req: Request, res: Response, next: NextFunc
                 companyId: company.id
             }
         });
+
+        await sendInvitationMail({ fullName, email, password });
         return httpResponse(req, res, 201, apiMessages.employee.employeeCreated, employee);
     } catch (error) {
         // Handle validation errors
@@ -377,11 +390,11 @@ export const deleteEmployee = async (req: Request, res: Response, next: NextFunc
         if (!req.user) {
             res.status(401).json({ message: apiMessages.error.unauthorized }); // Use clear unauthorized message
         }
+        const { id } = req.user as UserPayload;
         const { employeeId } = req.params;
         if (!employeeId) {
             return httpResponse(req, res, 400, apiMessages.error.invalidInput);
         }
-        const { id } = req.user as UserPayload;
 
         await prisma.employee.delete({
             where: {
@@ -426,20 +439,120 @@ export const changeEmployeeStatus = async (req: Request, res: Response, next: Ne
     }
 };
 
-//invitation
-export const sendInvitation = (_: Request, res: Response, next: NextFunction): void => {
+export const sendCompanyVerificationMail = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Send invitation not implemented yet' });
+        const { email } = await companyEmailSchema.parseAsync(req.body);
+        if (!email) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        const user = await prisma.company.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return httpResponse(req, res, 404, apiMessages.user.userNotFound);
+        }
+        const payload: UserPayload = {
+            id: user.id,
+            role: user.role,
+            accountType: user.accountType
+        };
+        const verificationToken = await generateVerificationToken(payload);
+        await prisma.company.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                verificationToken: verificationToken
+            }
+        });
+        await verificationCodeMail({ email, verificationToken });
+        return httpResponse(req, res, 200, apiMessages.success.verificationSent);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 
-export const verifyInvitation = (_: Request, res: Response, next: NextFunction): void => {
+export const verifyCompanyAccount = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Verify invitation not implemented yet' });
+        const { token } = req.params;
+        if (!token) {
+            return httpResponse(req, res, 404, apiMessages.auth.noTokenProvided);
+        }
+        const decoded = verifyVerificationToken(token) as UserPayload;
+        if (!decoded) {
+            return httpResponse(req, res, 400, apiMessages.auth.invalidToken);
+        }
+        await prisma.company.update({
+            where: {
+                id: decoded.id
+            },
+            data: {
+                isVerified: true
+            }
+        });
+        return httpResponse(req, res, 200, apiMessages.success.accountVerified);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
+    }
+};
+
+export const sendCompanyResetPasswordMail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email } = await companyEmailSchema.parseAsync(req.body);
+        if (!email) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        const user = await prisma.company.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return httpResponse(req, res, 404, apiMessages.user.userNotFound);
+        }
+        const payload: UserPayload = {
+            id: user.id,
+            role: user.role,
+            accountType: user.accountType
+        };
+        const forgetPassToken = generateForgetPasswordToken(payload);
+        await prisma.company.update({
+            where: { id: user.id },
+            data: { forgetPasswordToken: forgetPassToken }
+        });
+        await forgetPasswordMail({ email, forgetPassToken });
+        return httpResponse(req, res, 200, apiMessages.success.forgetPasswordSent);
+    } catch (error) {
+        return httpError(next, error, req, 500);
+    }
+};
+
+export const resetCompanyPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token } = req.params;
+        const { password } = await companyPasswordSchema.parseAsync(req.body);
+        if (!token) {
+            return httpResponse(req, res, 404, apiMessages.auth.noTokenProvided);
+        }
+        const decoded = verifyForgetPasswordToken(token) as UserPayload;
+        if (!decoded) {
+            return httpResponse(req, res, 400, apiMessages.auth.invalidToken);
+        }
+        const user = await prisma.company.findUnique({
+            where: { id: decoded.id }
+        });
+        if (!user) {
+            return httpResponse(req, res, 404, apiMessages.user.userNotFound);
+        }
+
+        const hashedPassword = await hashPassword(password);
+        await prisma.company.updateMany({
+            where: { id: decoded.id },
+            data: {
+                password: hashedPassword
+            }
+        });
+        return httpResponse(req, res, 200, apiMessages.success.passwordChanged);
+    } catch (error) {
+        return httpError(next, error, req, 500);
     }
 };
 

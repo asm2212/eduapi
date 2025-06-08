@@ -13,9 +13,17 @@ import {
 } from '../validator/individualValidator';
 import comparePassword from '../utils/comparePassword';
 import { UserPayload } from '../types/tokensType';
-import { generateTokens, generateVerificationToken } from '../utils/tokens/tokens';
+import {
+    generateForgetPasswordToken,
+    generateTokens,
+    generateVerificationToken,
+    verifyForgetPasswordToken,
+    verifyVerificationToken
+} from '../utils/tokens/tokens';
 import z from 'zod';
 import verificationCodeMail from '../services/emails/general/verficationCode';
+import forgetPasswordMail from '../services/emails/general/forgotPassword';
+import { employeePasswordSchema } from '../validator/employeeValidator';
 
 const prisma = new PrismaClient();
 // Individual Authentication Controllers
@@ -231,23 +239,93 @@ export const sendIndividualVerificationMail = async (req: Request, res: Response
     }
 };
 
-export const verifyIndividualAccount = async (req: Request, _: Response, next: NextFunction) => {
+export const verifyIndividualAccount = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const { token } = req.params;
+        if (!token) {
+            return httpResponse(req, res, 404, apiMessages.auth.noTokenProvided);
+        }
+        const decoded = verifyVerificationToken(token) as UserPayload;
+        if (!decoded) {
+            return httpResponse(req, res, 400, apiMessages.auth.invalidToken);
+        }
+
+        await prisma.individual.update({
+            where: {
+                id: decoded.id
+            },
+            data: {
+                isVerified: true
+            }
+        });
+        return httpResponse(req, res, 200, apiMessages.success.accountVerified);
     } catch (error) {
         return httpError(next, error, req, 500);
     }
 };
 
-export const sendIndividualResetPasswordMail = async (req: Request, _: Response, next: NextFunction) => {
+export const sendIndividualResetPasswordMail = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const { email } = await individualEmailSchema.parseAsync(req.body);
+        if (!email) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+
+        const user = await prisma.individual.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return httpResponse(req, res, 404, apiMessages.user.userNotFound);
+        }
+        const payload: UserPayload = {
+            id: user.id,
+            role: user.role,
+            accountType: user.accountType
+        };
+        const forgetPassToken = generateForgetPasswordToken(payload);
+        await prisma.individual.update({
+            where: { id: user.id },
+            data: { forgetPasswordToken: forgetPassToken }
+        });
+        await forgetPasswordMail({ email, forgetPassToken });
+        return httpResponse(req, res, 200, apiMessages.success.forgetPasswordSent);
     } catch (error) {
         return httpError(next, error, req, 500);
     }
 };
 
-export const resetIndividualPassword = async (req: Request, _: Response, next: NextFunction) => {
+export const resetIndividualPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const { token } = req.params;
+
+        const { password } = await employeePasswordSchema.parseAsync(req.body);
+        if (!token) {
+            return httpResponse(req, res, 404, apiMessages.auth.noTokenProvided);
+        }
+        const decoded = verifyForgetPasswordToken(token) as UserPayload;
+        if (!decoded) {
+            return httpResponse(req, res, 400, apiMessages.auth.invalidToken);
+        }
+
+        const user = await prisma.individual.findUnique({
+            where: { id: decoded.id }
+        });
+        if (!user) {
+            return httpResponse(req, res, 404, apiMessages.user.userNotFound);
+        }
+
+        const hashedPassword = await hashPassword(password);
+
+        await prisma.individual.updateMany({
+            where: { id: decoded.id },
+            data: {
+                password: hashedPassword
+            }
+        });
+
+        return httpResponse(req, res, 200, apiMessages.success.passwordChanged);
     } catch (error) {
         return httpError(next, error, req, 500);
     }
 };
+

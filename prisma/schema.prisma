@@ -117,6 +117,7 @@ model Company {
   maxEmployees String?
 
   // Relationships
+  courses         Course[]        @relation("CompanyCourses")
   employees       Employee[]      @relation("CompanyEmployees")
   contactPerson   CompanyContact? @relation("CompanyContactPerson") // Make optional
   contactPersonId String?         @unique // Add foreign key - Important and make it unique
@@ -198,4 +199,65 @@ model Individual {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+}
+
+model Course {
+  id                 String   @id @default(uuid())
+  title              String
+  description        String?
+  thumbnail          String?
+  cover              String?
+  category           String?
+  language           String?
+  duration           String?
+  level              String? // e.g., "Beginner", "Intermediate", "Advanced"
+  viewsCount         Int?     @default(0) // Number of views for the video
+  likesCount         Int?     @default(0) // Number of likes for the video
+  dislikesCount      Int?     @default(0) // Number of dislikes for the video
+  tags               String[] // Array of tags for searching/filtering
+  prerequisites      String? // Prerequisites for the course (text description)
+  whatYouWillLearn   String? // What students will learn (text description)
+  whoIsThisCourseFor String? // Intended audience (text description)
+  published          Boolean? @default(true) // Is the course published?
+  videos      Video[] // Relation to Video model (one-to-many)
+  assessments Assessment[] // Relation to Assessment model (one-to-many)
+  company   Company @relation("CompanyCourses", fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+
+model Video {
+  id              String      @id @default(uuid())
+  title           String
+  url             String
+  duration        String?
+  language        String?
+  category        String?
+  thumbnail       String?
+  cover           String?
+  chapter         Int?
+  description     String?
+  order           Int? // Add an order field for sorting videos within a chapter/course
+  isPublished     Boolean?    @default(true) // Add a field to track if the video is published
+  course          Course      @relation(fields: [courseId], references: [id], onDelete: Cascade) // Foreign key
+  courseId        String
+  videoAssessment Assessment? @relation("video_assessment") // One-to-one relation to video-specific assessment
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  @@index([courseId]) // Index for faster queries
+}
+model Assessment {Add commentMore actions
+  id        String   @id @default(uuid())
+  title     String // Title of the assessment
+  questions Json[] // Store assessment questions as JSON (required)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade) // Foreign key
+  courseId  String
+  video     Video?   @relation("video_assessment", fields: [videoId], references: [id], onDelete: Cascade) // back relation from video to its assessment
+  videoId   String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([courseId]) // Index for faster queries
+  @@index([videoId])
 }

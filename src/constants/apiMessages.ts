@@ -14,7 +14,8 @@ const apiMessages = {
         passwordResetSuccessful: 'Password reset successful',
         passwordChanged: 'Password Changed',
         verificationSent: 'Verification email sent',
-        forgetPasswordSent: 'Forget password email sent'
+        forgetPasswordSent: 'Forget password email sent',
+        accountVerified: 'Account Verified'
     },
 
     // General Error Messages

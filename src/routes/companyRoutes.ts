@@ -10,10 +10,12 @@ import {
     getCompanyProfile,
     getEmployeeById,
     getEmployees,
-    sendInvitation,
+    resetCompanyPassword,
+    sendCompanyResetPasswordMail,
+    sendCompanyVerificationMail,
     updateCompanyProfile,
     updateEmployee,
-    verifyInvitation
+    verifyCompanyAccount
 } from '../controllers/companyController';
 import { protect, protectCompany } from '../middlewares/authMiddleware';
 
@@ -22,10 +24,12 @@ const companyRouter = Router();
 // Company Authentication Routes (No auth middleware needed here)
 
 companyRouter.post('/signup', companySignup);
-
 companyRouter.post('/login', companyLogin);
-
 companyRouter.post('/logout', companyLogout); // Protect logout
+companyRouter.patch('/verify-account', sendCompanyVerificationMail);
+companyRouter.patch('/verify/:token', verifyCompanyAccount);
+companyRouter.patch('/forget-password', sendCompanyResetPasswordMail);
+companyRouter.patch('/reset-password/:token', resetCompanyPassword);
 
 // companyRouter.use(isCompanyAdmin);
 companyRouter.use(protect, protectCompany);
@@ -37,10 +41,6 @@ companyRouter.get('/me', getCompanyProfile);
 companyRouter.patch('/me', updateCompanyProfile);
 
 companyRouter.patch('/me/change-password', changePassword);
-companyRouter.patch('/verify-account');
-companyRouter.patch('/verify/:token');
-companyRouter.patch('/forget-password');
-companyRouter.patch('/reset-password/:token');
 
 // Company Employee Management
 
@@ -63,12 +63,6 @@ companyRouter
     .delete(deleteEmployee); // Delete an employee of the company
 
 companyRouter.patch('/employees/:employeeId/change-status', changeEmployeeStatus); // Change Employee Status
-
-// Invitations (For inviting new employees)
-
-companyRouter.post('/invitations', sendInvitation); // Send an invitation to a new employee
-
-companyRouter.get('/invitations/:invitationToken', verifyInvitation); // Verify invitation and redirect to signup
 
 export default companyRouter;
 

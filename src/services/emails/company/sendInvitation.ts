@@ -1,25 +1,30 @@
-import { convert } from 'html-to-text';
 import logger from '../../../utils/logger';
 import transporter from '../emailTransporter';
+import { convert } from 'html-to-text';
 
-const forgetPasswordMail = async ({ forgetPassToken, email }: { forgetPassToken: string; email: string }) => {
-    const html = `
-<!DOCTYPE html>
+const sendInvitationMail = async ({ fullName, email, password }: { fullName: string; email: string; password: string }) => {
+    try {
+        const html = `
+        <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset password | EDU</title>
+    <title>EDU Invitation</title>
     <style>
-    body {
+        body {
             font-family: sans-serif;
             background-color: #f9f9f9;
-            margin: 0;
-            padding: 0;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            height: 100vh;
+        }
+        .container {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            width: 100%;
         }
         .email-container {
             background-color: #ffffff;
@@ -31,22 +36,22 @@ const forgetPasswordMail = async ({ forgetPassToken, email }: { forgetPassToken:
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-align: left;
         }
-        .email-container img {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 20px;
+        .email-container h1 {
+            font-size: 24px;  /* Slightly larger heading */
+            color: #333333;
+            margin-bottom: 10px; /* Added some margin */
         }
         .email-container h2 {
             font-size: 20px;
             color: #333333;
             margin-bottom: 5px;
-      padding-bottom:10px;
-      border-bottom:1px solid #e0e0e0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
         }
         .email-container p {
             font-size: 14px;
             color: #666666;
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Adjusted margin */
         }
         .email-container .button {
             display: inline-block;
@@ -57,13 +62,14 @@ const forgetPasswordMail = async ({ forgetPassToken, email }: { forgetPassToken:
             border-radius: 4px;
             font-size: 14px;
             font-weight: bold;
+            transition: 0.2s all ease-in-out;
         }
         .email-container .button:hover {
             background-color: #0056b3;
         }
         .email-container .footer {
-      padding-bottom:10px;
-      border-top:1px solid #e0e0e0;
+            padding-bottom: 10px;
+            border-top: 1px solid #e0e0e0;
             margin-top: 20px;
             font-size: 12px;
             color: #999999;
@@ -78,40 +84,36 @@ const forgetPasswordMail = async ({ forgetPassToken, email }: { forgetPassToken:
     </style>
 </head>
 <body>
-       <h1>Edu</h1>
-    <h2>Reset Your Password</h2>
-    <p>
-      We received a request to reset your password for your Edu account.
-      If you didn't request a password reset, you can safely ignore this email.
-    </p>
-    <p>
-      To create a new password, please click the button below. This link will
-      expire in 48 hours for security reasons.
-    </p>
-       <a href="http://localhost:2001/verify/${forgetPassToken}" target="_blank" class="button">Reset Your Password</a>
-    <div class="footer">
-      <p>
-        Edu &nbsp;| <a href="#">3alearningsolutions.com</a>
-      </p>
-    </div>
+    <div class="container">
+        <div class="email-container">
+            <h1>EDU Invitation</h1>
+            <h2>Welcome to Edu, ${fullName}!</h2>
+            <p>You have been invited to join our EDU. To get started, please use the following credentials:</p>
+            <p>
+                <strong>Email:</strong> ${email}<br>
+                <strong>Password:</strong> ${password}  <br> <span style="font-size:12px; color:red;">(Please change your password after first login)</span>
+            </p>
+            <p>Click the button below to log in and begin exploring the Edu:</p>
+            <a href="[loginLink]" target="_blank" class="button">Log in to LMS</a>
+            <div class="footer">
+                <p>Edu &nbsp;| <a href="#">3alearningsolutions.com</a></p>
+            </div>
+        </div>
     </div>
 </body>
 </html>`;
-
-    try {
         const mailOptions = {
-            from: `"3a Edu" asmadm@gmail.com.com" `,
+            from: `"3a Edu" noreplyasmareadmasu0@gmail.com" `,
             to: email,
-            subject: `Reset Password - edu`,
+            subject: `Credential Details - LMS`,
             text: convert(html),
             html: html
         };
         const mailResponse = await transporter.sendMail(mailOptions);
         logger.info(`Email sent successfully. Message ID: ${mailResponse.messageId}`);
     } catch (error) {
-        logger.error(`Error while forget password mail:`, error);
+        logger.error(`Error while verification mail:`, error);
     }
 };
 
-export default forgetPasswordMail;
-
+export default sendInvitationMail;

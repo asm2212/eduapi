@@ -34,6 +34,10 @@ const adminRouter = Router();
 adminRouter.post('/signup', adminSignup);
 adminRouter.post('/login', adminLogin);
 adminRouter.post('/logout', adminLogout);
+adminRouter.patch('/verify-account');
+adminRouter.patch('/verify/:token');
+adminRouter.patch('/forget-password');
+adminRouter.patch('/reset-password/:token');
 
 // Apply admin authentication middleware to all routes *after* authentication routes
 // adminRouter.use(isAdmin);
@@ -43,10 +47,7 @@ adminRouter.use(protect, protectAdmin);
 adminRouter.get('/me', getMe);
 adminRouter.patch('/me', updateMe);
 adminRouter.patch('/me/change-password', changePassword);
-adminRouter.patch('/verify-account');
-adminRouter.patch('/verify/:token');
-adminRouter.patch('/forget-password');
-adminRouter.patch('/reset-password/:token');
+
 // comapny management routes
 adminRouter
     .route('/companies')

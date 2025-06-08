@@ -3,11 +3,18 @@ import httpError from '../utils/httpError';
 import httpResponse from '../utils/httpResponse';
 import apiMessages from '../constants/apiMessages';
 import { UserPayload } from '../types/tokensType';
-import { generateTokens } from '../utils/tokens/tokens';
+import { generateForgetPasswordToken, generateTokens, verifyForgetPasswordToken } from '../utils/tokens/tokens';
 import comparePassword from '../utils/comparePassword';
-import { employeeChangePasswordSchema, employeeLoginSchema, employeeUpdateSchema } from '../validator/employeeValidator';
+import {
+    employeeChangePasswordSchema,
+    employeeEmailSchema,
+    employeeLoginSchema,
+    employeePasswordSchema,
+    employeeUpdateSchema
+} from '../validator/employeeValidator';
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '../utils/hashPassword';
+import forgetPasswordMail from '../services/emails/general/forgotPassword';
 
 const prisma = new PrismaClient();
 
@@ -153,6 +160,65 @@ export const employeeChangePassword = async (req: Request, res: Response, next: 
                 id: employee.id
             },
             data: { password: hashedPassword }
+        });
+        return httpResponse(req, res, 200, apiMessages.success.passwordChanged);
+    } catch (error) {
+        return httpError(next, error, req, 500);
+    }
+};
+
+export const sendEmployeeResetPasswordMail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email } = await employeeEmailSchema.parseAsync(req.body);
+        if (!email) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        const user = await prisma.employee.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return httpResponse(req, res, 404, apiMessages.user.userNotFound);
+        }
+        const payload: UserPayload = {
+            id: user.id,
+            role: user.role,
+            accountType: user.accountType
+        };
+        const forgetPassToken = generateForgetPasswordToken(payload);
+        await prisma.employee.update({
+            where: { id: user.id },
+            data: { forgetPasswordToken: forgetPassToken }
+        });
+        await forgetPasswordMail({ email, forgetPassToken });
+        return httpResponse(req, res, 200, apiMessages.success.forgetPasswordSent);
+    } catch (error) {
+        return httpError(next, error, req, 500);
+    }
+};
+
+export const resetEmployeePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token } = req.params;
+        const { password } = await employeePasswordSchema.parseAsync(req.body);
+        if (!token) {
+            return httpResponse(req, res, 404, apiMessages.auth.noTokenProvided);
+        }
+        const decoded = verifyForgetPasswordToken(token) as UserPayload;
+        if (!decoded) {
+            return httpResponse(req, res, 400, apiMessages.auth.invalidToken);
+        }
+        const user = await prisma.employee.findUnique({
+            where: { id: decoded.id }
+        });
+        if (!user) {
+            return httpResponse(req, res, 404, apiMessages.user.userNotFound);
+        }
+        const hashedPassword = await hashPassword(password);
+        await prisma.employee.updateMany({
+            where: { id: decoded.id },
+            data: {
+                password: hashedPassword
+            }
         });
         return httpResponse(req, res, 200, apiMessages.success.passwordChanged);
     } catch (error) {

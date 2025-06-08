@@ -23,6 +23,7 @@ import logger from '../utils/logger';
 import generateShortId from '../utils/uIds';
 import { employeeSignupSchema } from '../validator/employeeValidator';
 import { companyEmployeeUpdateSchema, companyUpdateSchema } from '../validator/companyValidator';
+import sendInvitationMail from '../services/emails/company/sendInvitation';
 const prisma = new PrismaClient();
 
 // amdin authentication controllers
@@ -299,6 +300,8 @@ export const createCompany = async (req: Request, res: Response, next: NextFunct
                 maxEmployees
             }
         });
+
+        await sendInvitationMail({ fullName, email, password });
         return httpResponse(req, res, 201, apiMessages.company.companyCreated, { data: newCompany });
     } catch (error) {
         // Handle validation errors
