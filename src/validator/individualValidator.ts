@@ -35,3 +35,7 @@ export const individualChangePasswordSchema = z.object({
 
     newPassword: zodSchemas.passwordSchema
 });
+
+export const individualEmailSchema = z.object({
+    email: zodSchemas.emailSchema
+});

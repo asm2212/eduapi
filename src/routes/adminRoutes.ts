@@ -43,7 +43,10 @@ adminRouter.use(protect, protectAdmin);
 adminRouter.get('/me', getMe);
 adminRouter.patch('/me', updateMe);
 adminRouter.patch('/me/change-password', changePassword);
-
+adminRouter.patch('/verify-account');
+adminRouter.patch('/verify/:token');
+adminRouter.patch('/forget-password');
+adminRouter.patch('/reset-password/:token');
 // comapny management routes
 adminRouter
     .route('/companies')
@@ -63,10 +66,11 @@ adminRouter
     .route('/companies/:companyId/employees')
     .get(getCompanyEmployees) // Get employees of a companyAdd commentMore actions
     .post(createEmployee);
-adminRouter.get('/companies/:companyId/employees/:employeeId', getCompanyEmployeeById); // Get a specific employee of a company
 
-// Employee Management (Independent of Companies)
-adminRouter.route('/employees').get(getEmployees); // Get all employees
+adminRouter.get('/companies/:companyId/employees/:employeeId', getCompanyEmployeeById); // Get details of a specific employee in a company
+
+// Global Employee Management Routes
+adminRouter.route('/employees').get(getEmployees); // Get all employees (independent of company)
 
 adminRouter
     .route('/employees/:employeeId')

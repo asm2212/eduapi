@@ -37,6 +37,10 @@ companyRouter.get('/me', getCompanyProfile);
 companyRouter.patch('/me', updateCompanyProfile);
 
 companyRouter.patch('/me/change-password', changePassword);
+companyRouter.patch('/verify-account');
+companyRouter.patch('/verify/:token');
+companyRouter.patch('/forget-password');
+companyRouter.patch('/reset-password/:token');
 
 // Company Employee Management
 

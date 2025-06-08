@@ -5,6 +5,7 @@ import {
     adminChangePasswordSchema,
     adminChangeStatus,
     adminCreateCompany,
+    adminIndividualUpdateSchema,
     adminLoginSchema,
     adminSignupSchema,
     adminUpdateSchema
@@ -397,11 +398,20 @@ export const updateCompany = async (req: Request, res: Response, next: NextFunct
 };
 
 // delete a company
-export const deleteCompany = (_: Request, res: Response, next: NextFunction) => {
+export const deleteCompany = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Delete company not implemented yet' });
+        // Extract company ID from request parameters
+        const { companyId } = req.params;
+        // Validate company ID presence
+        if (!companyId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput); // Handle missing ID
+        }
+        // Delete the company using Prisma
+        await prisma.company.delete({ where: { id: companyId } });
+        // Send success response
+        return httpResponse(req, res, 200, apiMessages.company.companyDeleted);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 
@@ -611,11 +621,18 @@ export const updateEmployee = async (req: Request, res: Response, next: NextFunc
 };
 
 // delete an employee
-export const deleteEmployee = async (_: Request, res: Response, next: NextFunction) => {
+export const deleteEmployee = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Delete employee not implemented yet' });
+        const { employeeId } = req.params;
+        if (!employeeId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        await prisma.employee.delete({
+            where: { id: employeeId }
+        });
+        return httpResponse(req, res, 200, apiMessages.employee.employeeDeleted);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 // block an employee
@@ -673,36 +690,68 @@ export const deactivateEmployee = async (_: Request, res: Response, next: NextFu
 // Individual management
 
 // get all individuals
-export const getIndividuals = async (_: Request, res: Response, next: NextFunction) => {
+export const getIndividuals = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Get individuals not implemented yet' });
+        const individuals = await prisma.individual.findMany();
+        // Check if companies exist before sending a response
+        if (!individuals.length) {
+            return httpResponse(req, res, 200, apiMessages.user.usersNotFound, { data: [] });
+        }
+        return httpResponse(req, res, 200, apiMessages.user.usersFound, { data: individuals });
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 // get a single individual by ID
-export const getIndividualById = async (_: Request, res: Response, next: NextFunction) => {
+export const getIndividualById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Get individual by ID not implemented yet' });
+        const { individualId } = req.params;
+        const individual = await prisma.individual.findUnique({
+            where: { id: individualId }
+        });
+        if (!individual) {
+            return httpResponse(req, res, 200, apiMessages.user.userNotFound, { data: [] });
+        }
+        return httpResponse(req, res, 200, apiMessages.user.userFound, { data: individual });
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 
 // update an individual
-export const updateIndividual = (_: Request, res: Response, next: NextFunction) => {
+export const updateIndividual = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Update individual not implemented yet' });
+        const { individualId } = req.params;
+        const individual = await prisma.individual.findUnique({
+            where: { id: individualId }
+        });
+        if (!individual) {
+            return httpResponse(req, res, 200, apiMessages.user.userNotFound);
+        }
+
+        const userData = await adminIndividualUpdateSchema.parseAsync(req.body);
+        await prisma.individual.update({
+            where: { id: individual.id },
+            data: userData
+        });
+        return httpResponse(req, res, 200, apiMessages.success.updated);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 // delete an individual
-export const deleteIndividual = async (_: Request, res: Response, next: NextFunction) => {
+export const deleteIndividual = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Delete individual not implemented yet' });
+        const { individualId } = req.params;
+        if (!individualId) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        await prisma.individual.delete({
+            where: { id: individualId }
+        });
+        return httpResponse(req, res, 200, apiMessages.user.userDeleted);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 // block an individual
@@ -723,11 +772,34 @@ export const activateIndividual = async (_: Request, res: Response, next: NextFu
 };
 
 /** Change status of an individual. */
-export const changeIndividualStatus = async (_: Request, res: Response, next: NextFunction) => {
+export const changeIndividualStatus = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.status(501).json({ message: 'Deactivate individual not implemented yet' });
+        const { individualId } = req.params;
+        const individual = await prisma.individual.findUnique({
+            where: { id: individualId }
+        });
+        if (!individual) {
+            return httpResponse(req, res, 200, apiMessages.user.userNotFound);
+        }
+        const { status } = await adminChangeStatus.parseAsync(req.body);
+        const updatedIndividual = await prisma.individual.update({
+            where: { id: individual.id },
+            data: { status },
+            select: { status: true } // Select the updated status
+        });
+        let responseMessage: string;
+        if (updatedIndividual.status === 'BLOCKED') {
+            responseMessage = apiMessages.auth.blocked; // Assignment (=), not comparison (===)
+        } else if (updatedIndividual.status === 'ACTIVE') {
+            responseMessage = apiMessages.auth.active; // Assignment (=)
+        } else if (updatedIndividual.status === 'INACTIVE') {
+            responseMessage = apiMessages.auth.deactivate; // Assignment (=)
+        } else {
+            responseMessage = apiMessages.employee.employeeUpdated; // Default message
+        }
+        return httpResponse(req, res, 200, responseMessage);
     } catch (error) {
-        next(error); // Important: Pass errors to the error handling middleware
+        return httpError(next, error, req, 500);
     }
 };
 

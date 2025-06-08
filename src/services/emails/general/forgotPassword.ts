@@ -1,10 +1,14 @@
-const emailVerificationHtml = `
+import { convert } from 'html-to-text';
+import logger from '../../../utils/logger';
+import transporter from '../emailTransporter';
+
+const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verification | EDU</title>
+    <title>Reset password | EDU</title>
     <style>
     body {
             font-family: sans-serif;
@@ -73,17 +77,41 @@ const emailVerificationHtml = `
     </style>
 </head>
 <body>
-    <div class="email-container">
-<!--         <img src="https://via.placeholder.com/40" alt="Company Logo"> -->
-      <h1>Edu</h1>
-        <h2>Confirm your account</h1>
-        <p>Please click the button below to confirm your email address and finish setting up your account. This link is valid for 48 hours.</p>
-        <a href="#" class="button">Confirm</a>
-        <div class="footer">
-            <p>Edu &nbsp;| <a href="#">3alearningsolutions.com</a></p>
-        </div>
+       <h1>Edu</h1>
+    <h2>Reset Your Password</h2>
+    <p>
+      We received a request to reset your password for your Edu account.
+      If you didn't request a password reset, you can safely ignore this email.
+    </p>
+    <p>
+      To create a new password, please click the button below. This link will
+      expire in 48 hours for security reasons.
+    </p>
+    <a href="#" class="button">Reset Your Password</a>
+    <div class="footer">
+      <p>
+        Edu &nbsp;| <a href="#">3alearningsolutions.com</a>
+      </p>
+    </div>
     </div>
 </body>
 </html>`;
-export default emailVerificationHtml;
+
+const forgetPasswordMail = async () => {
+    try {
+        const mailOptions = {
+            from: `"3a Edu" asmadm@gmail.com.com" `,
+            to: `asmareamdasu0@gmail.com@gmail.com`,
+            subject: `Reset Password - edu`,
+            text: convert(html),
+            html: html
+        };
+        const mailResponse = await transporter.sendMail(mailOptions);
+        logger.info(`Email sent successfully. Message ID: ${mailResponse.messageId}`);
+    } catch (error) {
+        logger.error(`Error while forget password mail:`, error);
+    }
+};
+
+export default forgetPasswordMail;
 

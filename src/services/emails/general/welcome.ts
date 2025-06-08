@@ -1,12 +1,15 @@
-const emailVerificationHtml = `
+import { convert } from 'html-to-text';
+import transporter from '../emailTransporter';
+import logger from '../../../utils/logger';
+const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verification | EDU</title>
+    <title>Welcome to Edu - [name]</title>
     <style>
-    body {
+        body {
             font-family: sans-serif;
             background-color: #f9f9f9;
             margin: 0;
@@ -73,17 +76,53 @@ const emailVerificationHtml = `
     </style>
 </head>
 <body>
-    <div class="email-container">
-<!--         <img src="https://via.placeholder.com/40" alt="Company Logo"> -->
-      <h1>Edu</h1>
-        <h2>Confirm your account</h1>
-        <p>Please click the button below to confirm your email address and finish setting up your account. This link is valid for 48 hours.</p>
-        <a href="#" class="button">Confirm</a>
-        <div class="footer">
-            <p>Edu &nbsp;| <a href="#">3alearningsolutions.com</a></p>
-        </div>
+  <div class="email-container">
+    <h1>Edu</h1>
+    <h2>Welcome to Edu, [User Name]!</h2>
+    <p>
+      Thank you for verifying your email address and completing your Edu account setup.
+      We're excited to have you on board!
+    </p>
+    <p>
+      Edu offers a wide range of courses to help you learn and grow in your field.
+      Explore our course catalog, find topics that interest you, and start learning
+      at your own pace.
+    </p>
+    <p>Here are some helpful resources to get you started:</p>
+    <ul>
+      <li><a href="#">Browse Courses</a></li>
+      <li><a href="#">Search for Specific Topics</a></li>
+      <li><a href="#">Learn About Edu Features</a></li>
+    </ul>
+    <p>
+      We're here to support you on your learning journey. If you have any questions,
+      don't hesitate to contact our support team at <a href="mailto:support@lms.com">support@lms.com</a>.
+    </p>
+    <div class="footer">
+      <p>
+        LMS &nbsp;| <a href="#">3alearningsolutions.com</a>
+      </p>
     </div>
+  </div>
 </body>
-</html>`;
-export default emailVerificationHtml;
+</html>
+`;
+
+const welcomeMail = async () => {
+    try {
+        const mailOptions = {
+            from: `"3a Edu" asmareadmasu0@gmail.com.com" `,
+            to: `asmareadmasu0@gmail.com`,
+            subject: `Welcome to Edu - [name]`,
+            text: convert(html),
+            html: html
+        };
+        const mailResponse = await transporter.sendMail(mailOptions);
+        logger.info(`Email sent successfully. Message ID: ${mailResponse.messageId}`);
+    } catch (error) {
+        logger.error(`Error while welcome mail:`, error);
+    }
+};
+
+export default welcomeMail;
 

@@ -5,8 +5,9 @@ import apiMessages from '../constants/apiMessages';
 import { UserPayload } from '../types/tokensType';
 import { generateTokens } from '../utils/tokens/tokens';
 import comparePassword from '../utils/comparePassword';
-import { employeeLoginSchema, employeeUpdateSchema } from '../validator/employeeValidator';
+import { employeeChangePasswordSchema, employeeLoginSchema, employeeUpdateSchema } from '../validator/employeeValidator';
 import { PrismaClient } from '@prisma/client';
+import { hashPassword } from '../utils/hashPassword';
 
 const prisma = new PrismaClient();
 
@@ -127,3 +128,34 @@ export const employeeUpdate = async (req: Request, res: Response, next: NextFunc
     }
 };
 
+export const employeeChangePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Ensure user object exists on request (check for authentication middleware)
+        if (!req.user) {
+            res.status(401).json({ message: apiMessages.error.unauthorized }); // Use clear unauthorized message
+        }
+        const { id } = req.user as UserPayload; // Destructure user ID for clarity
+        const { oldPassword, newPassword } = await employeeChangePasswordSchema.parseAsync(req.body);
+        const employee = await prisma.employee.findUnique({
+            where: { id }
+        });
+        if (!employee) {
+            return httpResponse(req, res, 404, apiMessages.employee.employeeNotFound);
+        }
+        // check password
+        const isPasswordCorrect = await comparePassword(oldPassword, employee.password);
+        if (!isPasswordCorrect) {
+            return httpResponse(req, res, 401, apiMessages.auth.wrongCredentials);
+        }
+        const hashedPassword = await hashPassword(newPassword);
+        await prisma.employee.updateMany({
+            where: {
+                id: employee.id
+            },
+            data: { password: hashedPassword }
+        });
+        return httpResponse(req, res, 200, apiMessages.success.passwordChanged);
+    } catch (error) {
+        return httpError(next, error, req, 500);
+    }
+};

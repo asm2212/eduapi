@@ -6,14 +6,16 @@ import { hashPassword } from '../utils/hashPassword';
 import httpError from '../utils/httpError';
 import {
     individualChangePasswordSchema,
+    individualEmailSchema,
     individualLoginSchema,
     individualSignupSchema,
     individualUpdateSchema
 } from '../validator/individualValidator';
 import comparePassword from '../utils/comparePassword';
 import { UserPayload } from '../types/tokensType';
-import { generateTokens } from '../utils/tokens/tokens';
+import { generateTokens, generateVerificationToken } from '../utils/tokens/tokens';
 import z from 'zod';
+import verificationCodeMail from '../services/emails/general/verficationCode';
 
 const prisma = new PrismaClient();
 // Individual Authentication Controllers
@@ -48,6 +50,7 @@ export const individualSignup = async (req: Request, res: Response, next: NextFu
         return httpError(next, error, req, 500);
     }
 };
+
 export const individualLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const { email, password } = await individualLoginSchema.parseAsync(req.body);
@@ -116,6 +119,7 @@ export const individualLogout = (req: Request, res: Response, next: NextFunction
         return httpError(next, error, req, 500);
     }
 };
+
 export const getProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Ensure user object exists on request (check for authentication middleware)
@@ -145,6 +149,7 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
         return httpError(next, error, req, 500);
     }
 };
+
 export const updateIndividual = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Ensure user object exists on request (check for authentication middleware)
@@ -162,6 +167,7 @@ export const updateIndividual = async (req: Request, res: Response, next: NextFu
         return httpError(next, error, req, 500);
     }
 };
+
 export const individualChangePassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) {
@@ -192,3 +198,56 @@ export const individualChangePassword = async (req: Request, res: Response, next
     }
 };
 
+export const sendIndividualVerificationMail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email } = await individualEmailSchema.parseAsync(req.body);
+        if (!email) {
+            return httpResponse(req, res, 400, apiMessages.error.invalidInput);
+        }
+        const user = await prisma.individual.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return httpResponse(req, res, 404, apiMessages.user.userNotFound);
+        }
+        const payload: UserPayload = {
+            id: user.id,
+            role: user.role,
+            accountType: user.accountType
+        };
+        const verificationToken = await generateVerificationToken(payload);
+        await prisma.individual.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                verificationToken: verificationToken
+            }
+        });
+        await verificationCodeMail({ email, verificationToken });
+        return httpResponse(req, res, 200, apiMessages.success.verificationSent);
+    } catch (error) {
+        return httpError(next, error, req, 500);
+    }
+};
+
+export const verifyIndividualAccount = async (req: Request, _: Response, next: NextFunction) => {
+    try {
+    } catch (error) {
+        return httpError(next, error, req, 500);
+    }
+};
+
+export const sendIndividualResetPasswordMail = async (req: Request, _: Response, next: NextFunction) => {
+    try {
+    } catch (error) {
+        return httpError(next, error, req, 500);
+    }
+};
+
+export const resetIndividualPassword = async (req: Request, _: Response, next: NextFunction) => {
+    try {
+    } catch (error) {
+        return httpError(next, error, req, 500);
+    }
+};

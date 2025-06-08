@@ -1,2 +1,3 @@
-const forgetPasswordHtml = ``;
-export default forgetPasswordHtml;
+// const forgetPasswordHtml = ``;
+// export default forgetPasswordHtml;
+

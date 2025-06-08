@@ -12,7 +12,9 @@ const apiMessages = {
         verified: 'Verified successfully',
         passwordResetRequestSent: 'Password reset request sent successfully',
         passwordResetSuccessful: 'Password reset successful',
-        passwordChanged: 'Password Changed'
+        passwordChanged: 'Password Changed',
+        verificationSent: 'Verification email sent',
+        forgetPasswordSent: 'Forget password email sent'
     },
 
     // General Error Messages
@@ -51,7 +53,10 @@ const apiMessages = {
         userUpdated: 'User updated',
         userDeleted: 'User deleted',
         userNotFound: 'User not found',
-        userAlreadyEnrolled: 'User already enrolled'
+        userFound: 'User found',
+        userAlreadyEnrolled: 'User already enrolled',
+        usersNotFound: 'Users not found',
+        usersFound: 'Users found'
     },
 
     // Admin-Specific Messages

@@ -30,3 +30,8 @@ export const employeeUpdateSchema = z.object({
     phone: zodSchemas.phoneSchema.optional(),
     socialLinks: zodSchemas.socialLinks.optional()
 });
+
+export const employeeChangePasswordSchema = z.object({
+    oldPassword: z.string(),
+    newPassword: zodSchemas.passwordSchema
+});
