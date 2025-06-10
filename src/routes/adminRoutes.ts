@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import {
+    adminChangePassword,
     adminLogin,
     adminLogout,
+    adminProfile,
     adminSignup,
     changeCompanyPlan,
     changeCompanyStatus,
     changeEmployeeStatus,
     changeIndividualStatus,
-    changePassword,
     createCompany,
     createEmployee,
     deleteCompany,
@@ -21,11 +22,10 @@ import {
     getEmployees,
     getIndividualById,
     getIndividuals,
-    getMe,
+    updateAdmin,
     updateCompany,
     updateEmployee,
-    updateIndividual,
-    updateMe
+    updateIndividual
 } from '../controllers/adminController';
 import { protect, protectAdmin } from '../middlewares/authMiddleware';
 
@@ -44,9 +44,9 @@ adminRouter.patch('/reset-password/:token');
 adminRouter.use(protect, protectAdmin);
 
 // Admin Self Routes (Protected by isAdmin middleware)
-adminRouter.get('/me', getMe);
-adminRouter.patch('/me', updateMe);
-adminRouter.patch('/me/change-password', changePassword);
+adminRouter.get('/me', adminProfile); // Get admin's own details
+adminRouter.patch('/me', updateAdmin); // Update admin's own profile
+adminRouter.patch('/me/change-password', adminChangePassword); // Change admin's password
 
 // comapny management routes
 adminRouter
