@@ -115,24 +115,30 @@ MAIL_HOST=your_mail_host
 MAIL_USER=your_mail_user
 MAIL_PASSWORD=your_mail_password
 
+```
 
 🧪 Getting Started
+
 # 1. Clone the repository
+
 git clone https://github.com/your-username/eduapi.git
 
 # 2. Navigate into the project
+
 cd eduapi
 
 # 3. Install dependencies
+
 npm install
 
 # 4. Generate Prisma client & migrate database
+
 npx prisma generate
 npx prisma migrate dev --name init
 
 # 5. Start the development server
-npm run dev
 
+## npm run dev
 
 🔐 API Routes
 
@@ -191,6 +197,8 @@ Example Endpoints by Role
 
     PATCH /api/v1/individual/change-password – Change password
 
+---
+
     🧠 Database Models (Prisma)
 
 Main Prisma models:
@@ -217,9 +225,11 @@ Enums used:
 
     Departments (e.g., HR, IT, Sales, etc.)
 
+---
 
 🤝 Contributing
 
+```
     Fork the repository
 
     Create a new branch: git checkout -b feature/your-feature
@@ -229,10 +239,12 @@ Enums used:
     Push to the branch: git push origin feature/your-feature
 
     Open a pull request
+    ---
 
 📃 License
 
 This project is licensed under the MIT License.
+---
 
 📫 Contact
 
