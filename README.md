@@ -50,15 +50,44 @@ _Built with Node.js • Express • TypeScript • PostgreSQL_
 
 ## 📂 Project Structure
 
-├── src/
-│ ├── routes/
-│ ├── middlewares/
-│ ├── constants/
-│ ├── utils/
-│ └── app.ts
-├── .env
-├── prisma/
+EDUAPI/
+├── .husky/ # Git hooks
+├── .vscode/ # VSCode settings
+├── docker/ # Docker configurations
+├── logs/ # Log files
+├── node_modules/ # Dependencies
+├── prisma/ # Prisma schema & migrations
+│ ├── migrations/
+│ └── schema.prisma
+├── src/ # Source code
+│ ├── configs/ # App-level config (env, db, etc.)
+│ ├── constants/ # Static values and enums
+│ ├── controllers/ # Route logic controllers
+│ ├── middlewares/ # Middleware functions
+│ ├── routes/ # API routes
+│ ├── services/
+│ │ └── emails/ # Email service
+│ │ ├── company/
+│ │ ├── general/
+│ │ ├── templates/ # Email HTML/text templates
+│ │ ├── emailSender.ts
+│ │ └── emailTransporter.ts
+│ ├── types/ # Custom TypeScript types
+│ ├── utils/ # Helper utilities
+│ ├── validator/ # Zod or Joi validators
+│ ├── app.ts # Express app entry
+│ └── server.ts # Server bootstrapping
+├── .env # Environment variables
+├── .dockerignore
+├── .eslintignore
+├── .gitignore
+├── .prettierrc
+├── commitlint.config.js
+├── eslint.config.mjs
+├── nodemon.json
 ├── package.json
+├── package-lock.json
+└── README.md
 
 ---
 
@@ -68,6 +97,7 @@ Create a `.env` file at the root and configure it like this:
 
 ```env
 PORT=3000
+SERVER_URL=http://localhost:3000
 DATABASE_URL="postgresql://youruser:yourpassword@localhost:5432/eduapi?schema=public"
 
 ACCESS_TOKEN_SECRET="your_access_token_secret"
@@ -84,30 +114,25 @@ MAIL_NAME=your_mail_name
 MAIL_HOST=your_mail_host
 MAIL_USER=your_mail_user
 MAIL_PASSWORD=your_mail_password
-```
+
 
 🧪 Getting Started
-
 # 1. Clone the repository
-
 git clone https://github.com/your-username/eduapi.git
 
 # 2. Navigate into the project
-
 cd eduapi
 
 # 3. Install dependencies
-
 npm install
 
 # 4. Generate Prisma client & migrate database
-
 npx prisma generate
 npx prisma migrate dev --name init
 
 # 5. Start the development server
-
 npm run dev
+
 
 🔐 API Routes
 
@@ -118,6 +143,80 @@ npm run dev
 | `/api/v1/company`    | Company account management    |
 | `/api/v1/employee`   | Employee-specific features    |
 | `/api/v1/individual` | Individual user functionality |
+
+Example Endpoints by Role
+👨‍💼 Admin
+
+    POST /api/v1/admin/signup – Create admin
+
+    POST /api/v1/admin/login – Login admin
+
+    PATCH /api/v1/admin/me/change-password – Change password
+
+    GET /api/v1/admin/companies – Get companies
+
+    PATCH /api/v1/admin/companies/:id/change-plan – Change company plan
+
+    GET /api/v1/admin/individuals – View individuals
+
+    DELETE /api/v1/admin/employees/:id – Delete employee
+
+🏢 Company
+
+    POST /api/v1/company/signup – Register company
+
+    POST /api/v1/company/login – Login
+
+    PATCH /api/v1/company/me/change-password – Update password
+
+    GET /api/v1/company/employees – List employees
+
+    POST /api/v1/company/employees – Add employee
+
+👨‍🔧 Employee
+
+    POST /api/v1/employee/login – Login
+
+    GET /api/v1/employee/me – Get profile
+
+    PATCH /api/v1/employee/change-password – Change password
+
+👤 Individual
+
+    POST /api/v1/individual/signup – Register
+
+    POST /api/v1/individual/login – Login
+
+    GET /api/v1/individual/me – Get profile
+
+    PATCH /api/v1/individual/change-password – Change password
+
+    🧠 Database Models (Prisma)
+
+Main Prisma models:
+
+    Admin
+
+    Company
+
+    Employee
+
+    Individual
+
+    Course, Video, Assessment
+
+    CompanyContact
+
+Enums used:
+
+    Role (ADMIN, COMPANY, EMPLOYEE, INDIVIDUAL)
+
+    Status (ACTIVE, BLOCKED, INACTIVE)
+
+    PlanType (TRIAL, BASIC, STANDARD, PREMIUM, CUSTOM)
+
+    Departments (e.g., HR, IT, Sales, etc.)
+
 
 🤝 Contributing
 
@@ -138,3 +237,6 @@ This project is licensed under the MIT License.
 📫 Contact
 
 Built with ❤️ by Asmare Admasu
+
+```
+
