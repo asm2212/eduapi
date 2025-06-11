@@ -115,9 +115,10 @@ MAIL_HOST=your_mail_host
 MAIL_USER=your_mail_user
 MAIL_PASSWORD=your_mail_password
 
-```
+---
 
 🧪 Getting Started
+```
 
 # 1. Clone the repository
 
@@ -139,6 +140,8 @@ npx prisma migrate dev --name init
 # 5. Start the development server
 
 ## npm run dev
+
+---
 
 🔐 API Routes
 
@@ -239,11 +242,13 @@ Enums used:
     Push to the branch: git push origin feature/your-feature
 
     Open a pull request
-    ---
+
+ ---
 
 📃 License
 
 This project is licensed under the MIT License.
+
 ---
 
 📫 Contact
