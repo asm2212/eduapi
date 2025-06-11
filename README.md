@@ -94,7 +94,7 @@ EDUAPI/
 
 Create a `.env` file at the root and configure it like this:
 ```
-  env
+  
 PORT=3000
 SERVER_URL=http://localhost:3000
 DATABASE_URL="postgresql://youruser:yourpassword@localhost:5432/eduapi?schema=public"
