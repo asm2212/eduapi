@@ -49,7 +49,7 @@ _Built with Node.js • Express • TypeScript • PostgreSQL_
 ---
 
 ## 📂 Project Structure
-
+```
 EDUAPI/
 ├── .husky/ # Git hooks
 ├── .vscode/ # VSCode settings
@@ -115,8 +115,10 @@ MAIL_HOST=your_mail_host
 MAIL_USER=your_mail_user
 MAIL_PASSWORD=your_mail_password
 
+---
 
 🧪 Getting Started
+```
 # 1. Clone the repository
 git clone https://github.com/your-username/eduapi.git
 
@@ -133,6 +135,7 @@ npx prisma migrate dev --name init
 # 5. Start the development server
 npm run dev
 
+---
 
 🔐 API Routes
 
@@ -191,6 +194,8 @@ Example Endpoints by Role
 
     PATCH /api/v1/individual/change-password – Change password
 
+-
+
     🧠 Database Models (Prisma)
 
 Main Prisma models:
@@ -208,18 +213,14 @@ Main Prisma models:
     CompanyContact
 
 Enums used:
-
     Role (ADMIN, COMPANY, EMPLOYEE, INDIVIDUAL)
-
     Status (ACTIVE, BLOCKED, INACTIVE)
-
     PlanType (TRIAL, BASIC, STANDARD, PREMIUM, CUSTOM)
-
     Departments (e.g., HR, IT, Sales, etc.)
-
+---
 
 🤝 Contributing
-
+```
     Fork the repository
 
     Create a new branch: git checkout -b feature/your-feature
