@@ -88,14 +88,13 @@ EDUAPI/
 ├── package.json
 ├── package-lock.json
 └── README.md
+```
 
----
-
-## ⚙️ Environment Setup
+ ⚙️ Environment Setup
 
 Create a `.env` file at the root and configure it like this:
-
-```env
+```
+  env
 PORT=3000
 SERVER_URL=http://localhost:3000
 DATABASE_URL="postgresql://youruser:yourpassword@localhost:5432/eduapi?schema=public"
@@ -115,10 +114,11 @@ MAIL_HOST=your_mail_host
 MAIL_USER=your_mail_user
 MAIL_PASSWORD=your_mail_password
 
----
+```
 
 🧪 Getting Started
 ```
+
 # 1. Clone the repository
 git clone https://github.com/your-username/eduapi.git
 
@@ -135,7 +135,7 @@ npx prisma migrate dev --name init
 # 5. Start the development server
 npm run dev
 
----
+```
 
 🔐 API Routes
 
@@ -213,9 +213,13 @@ Main Prisma models:
     CompanyContact
 
 Enums used:
+
     Role (ADMIN, COMPANY, EMPLOYEE, INDIVIDUAL)
+    
     Status (ACTIVE, BLOCKED, INACTIVE)
+    
     PlanType (TRIAL, BASIC, STANDARD, PREMIUM, CUSTOM)
+    
     Departments (e.g., HR, IT, Sales, etc.)
 ---
 
@@ -230,6 +234,7 @@ Enums used:
     Push to the branch: git push origin feature/your-feature
 
     Open a pull request
+```
 
 📃 License
 
